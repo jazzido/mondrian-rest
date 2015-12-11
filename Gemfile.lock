@@ -1,0 +1,111 @@
+GIT
+  remote: https://github.com/rsim/mondrian-olap.git
+  revision: 70673f96f964fad304c79351369c24d9f76ce52f
+  specs:
+    mondrian-olap (0.6.0)
+      nokogiri
+
+GEM
+  remote: http://rubygems.org/
+  specs:
+    activesupport (4.2.5)
+      i18n (~> 0.7)
+      json (~> 1.7, >= 1.7.7)
+      minitest (~> 5.1)
+      thread_safe (~> 0.3, >= 0.3.4)
+      tzinfo (~> 1.1)
+    axiom-types (0.1.1)
+      descendants_tracker (~> 0.0.4)
+      ice_nine (~> 0.11.0)
+      thread_safe (~> 0.3, >= 0.3.1)
+    builder (3.2.2)
+    coderay (1.1.0)
+    coercible (1.0.0)
+      descendants_tracker (~> 0.0.1)
+    columnize (0.9.0)
+    descendants_tracker (0.0.4)
+      thread_safe (~> 0.3, >= 0.3.1)
+    diff-lcs (1.2.5)
+    equalizer (0.0.11)
+    ffi (1.9.10-java)
+    grape (0.14.0)
+      activesupport
+      builder
+      hashie (>= 2.1.0)
+      multi_json (>= 1.3.2)
+      multi_xml (>= 0.5.2)
+      rack (>= 1.3.0)
+      rack-accept
+      rack-mount
+      virtus (>= 1.0.0)
+    hashie (3.4.3)
+    i18n (0.7.0)
+    ice_nine (0.11.1)
+    jdbc-derby (10.11.1.1)
+    json (1.8.3-java)
+    linecache (1.3.1-java)
+    method_source (0.8.2)
+    minitest (5.8.3)
+    multi_json (1.11.2)
+    multi_xml (0.5.5)
+    nokogiri (1.6.7-java)
+    null_logger (0.0.1)
+    pry (0.10.3-java)
+      coderay (~> 1.1.0)
+      method_source (~> 0.8.1)
+      slop (~> 3.4)
+      spoon (~> 0.0)
+    rack (1.6.4)
+    rack-accept (0.4.5)
+      rack (>= 0.4)
+    rack-mount (0.8.3)
+      rack (>= 1.0.0)
+    rack-test (0.6.3)
+      rack (>= 1.0)
+    rake (10.4.2)
+    rspec (3.4.0)
+      rspec-core (~> 3.4.0)
+      rspec-expectations (~> 3.4.0)
+      rspec-mocks (~> 3.4.0)
+    rspec-core (3.4.1)
+      rspec-support (~> 3.4.0)
+    rspec-expectations (3.4.0)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.4.0)
+    rspec-mocks (3.4.0)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.4.0)
+    rspec-support (3.4.1)
+    ruby-debug (0.10.6)
+      columnize (>= 0.1)
+      linecache (~> 1.3.1)
+      ruby-debug-base (~> 0.10.6.0)
+    ruby-debug-base (0.10.6-java)
+    slop (3.6.0)
+    spoon (0.0.4)
+      ffi
+    thread_safe (0.3.5-java)
+    tzinfo (1.2.2)
+      thread_safe (~> 0.1)
+    virtus (1.0.5)
+      axiom-types (~> 0.1)
+      coercible (~> 1.0)
+      descendants_tracker (~> 0.0, >= 0.0.3)
+      equalizer (~> 0.0, >= 0.0.9)
+
+PLATFORMS
+  java
+
+DEPENDENCIES
+  grape
+  jdbc-derby
+  mondrian-olap!
+  null_logger
+  pry
+  rack-test
+  rake
+  rspec
+  ruby-debug
+
+BUNDLED WITH
+   1.10.6
