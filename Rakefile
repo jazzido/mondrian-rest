@@ -17,3 +17,5 @@ task :routes do
     puts "     #{method} #{path}"
   end
 end
+
+task :default => [:spec]
