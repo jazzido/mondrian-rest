@@ -1,0 +1,51 @@
+require 'json'
+require 'pp'
+require 'pry'
+
+require 'spec_helper.rb'
+
+describe "Webshop" do
+  include Rack::Test::Methods
+
+  before(:all) do
+    ws_params = setup_webshop
+    @agg = Mondrian::REST::Server.instance
+    @agg.params = ws_params
+    @agg.connect!
+
+    @app = Mondrian::REST::Api.new
+  end
+
+  def app
+    @app
+  end
+
+  it "should return a list of cubes" do
+    get '/cubes'
+    expected = ["Sales"]
+    expect(JSON.parse(last_response.body)['cubes']).to eq(expected)
+  end
+
+  it "should return the members of a dimension" do
+    get '/cubes/Sales/dimensions/Country'
+    expect(JSON.parse(last_response.body)['hierarchies'].first['levels'][1]['members'].size).to eq(4)
+  end
+
+  it "should drilldown by continent and product category" do
+    get '/cubes/Sales/aggregate?drilldown[]=Country.Continent&drilldown[]=Product.Category&measures[]=Price%20Total'
+    puts last_response.body
+    # XXX TODO assertions
+  end
+
+  it "should drilldown by month and product category" do
+    get '/cubes/Sales/aggregate?drilldown[]=Date.Month&drilldown[]=Product.Category&measures[]=Price%20Total&measures[]=Quantity'
+    pp JSON.parse(last_response.body)
+    # XXX TODO assertions
+  end
+
+  it "should drilldown by country, month, and product category and return CSV" do
+    get '/cubes/Sales/aggregate.csv?drilldown[]=Country&drilldown[]=Date.Month&drilldown[]=Product.Category&measures[]=Price%20Total&measures[]=Quantity'
+    expect(CSV.parse(last_response.body)).to eq(CSV.read(File.join(File.dirname(__FILE__), 'fixtures', 'webshop_1.csv')))
+  end
+
+end

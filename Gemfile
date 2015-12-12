@@ -14,6 +14,7 @@ platform :jruby do
   group :test do
     gem 'rspec'
     gem 'jdbc-derby'
+    gem 'jdbc-sqlite3'
     gem 'rack-test'
     gem 'rubyzip'
   end

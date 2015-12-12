@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<Schema name="Webshop">
+    <!-- ported to mondrian from https://github.com/DataBrewery/cubes-examples/blob/master/webshop/model.json -->
+
+    <Dimension name="Date" type="TimeDimension">
+        <Hierarchy hasAll="false" primaryKey="id" name="Monthly">
+            <Table name="dates" />
+            <Level name="Year" column="date_year" type="Numeric" uniqueMembers="true" levelType="TimeYears" />
+            <Level name="Quarter" column="date_quarter" uniqueMembers="false" levelType="TimeQuarters" />
+            <Level name="Month" column="date_month" uniqueMembers="false" type="Numeric" levelType="TimeMonths" />
+        </Hierarchy>
+
+        <Hierarchy hasAll="true" name="Weekly" primaryKey="id">
+            <Table name="dates" />
+            <Level name="Year" column="date_year" type="Numeric" uniqueMembers="true" levelType="TimeYears" />
+            <Level name="Week" column="date_week" type="Numeric" uniqueMembers="false" levelType="TimeWeeks"/>
+        </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Product">
+        <Hierarchy hasAll="true" primaryKey="id">
+            <Table name="products" />
+            <Level name="Category" column="category_id" nameColumn="category_label" uniqueMembers="true" />
+            <Level name="Product" column="product_id" nameColumn="product_label" uniqueMembers="true" />
+        </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Country">
+        <Hierarchy hasAll="true" primaryKey="id">
+            <Table name="countries" />
+            <Level name="Continent" column="continent_id" nameColumn="continent_label" uniqueMembers="true" />
+            <Level name="Country" column="country_id" nameColumn="country_label" uniqueMembers="true" />
+        </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Customer">
+        <Hierarchy hasAll="true" primaryKey="id">
+            <Table name="customers" />
+            <Level name="Customer" column="id" nameColumn="name" uniqueMembers="true" />
+        </Hierarchy>
+    </Dimension>
+
+    <Cube name="Sales" caption="Webshop / Sales">
+        <Table name="sales" />
+        <DimensionUsage name="Date" source="Date" foreignKey="date_id" />
+        <DimensionUsage name="Customer" source="Customer" foreignKey="customer_id" />
+        <DimensionUsage name="Product" source="Product" foreignKey="product_id" />
+        <DimensionUsage name="Country" source="Country" foreignKey="country_id" />
+
+        <Measure name="Quantity" column="quantity" aggregator="sum" />
+        <Measure name="Price Total" column="price_total" aggregator="sum" />
+    </Cube>
+</Schema>

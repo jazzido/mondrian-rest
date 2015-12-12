@@ -14,8 +14,8 @@ module Mondrian::REST
     resource :mdx do
       content_type :xls, "application/vnd.ms-excel"
       formatter :xls, Mondrian::REST::XLSFormatter
-      content_type :html, "text/html"
-      formatter :html, Mondrian::REST::HTMLFormatter
+      content_type :csv, "text/csv"
+      formatter :csv, Mondrian::REST::CSVFormatter
       desc "Execute an MDX query against a cube"
       content_type :txt, "text/plain"
       post do
@@ -46,8 +46,8 @@ module Mondrian::REST
         resource :aggregate do
           content_type :xls, "application/vnd.ms-excel"
           formatter :xls, Mondrian::REST::XLSFormatter
-          content_type :html, "text/html"
-          formatter :html, Mondrian::REST::HTMLFormatter
+          content_type :csv, "text/csv"
+          formatter :csv, Mondrian::REST::CSVFormatter
 
           desc "aggregate from query parameters"
           params do
@@ -58,6 +58,7 @@ module Mondrian::REST
           get do
             cube = get_cube_or_404(params[:cube_name])
             query = build_query(cube, params)
+            puts query.to_mdx
             mdx(query.to_mdx)
           end
         end

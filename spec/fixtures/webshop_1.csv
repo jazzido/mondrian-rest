@@ -1,0 +1,385 @@
+Country,Date,Product,Price Total,Quantity
+Africa,1,Books,,
+Africa,1,Sports,,
+Africa,1,Various,,
+Africa,1,Videos,,
+Africa,2,Books,,
+Africa,2,Sports,,
+Africa,2,Various,,
+Africa,2,Videos,,
+Africa,3,Books,,
+Africa,3,Sports,115.24,1.0
+Africa,3,Various,,
+Africa,3,Videos,,
+Africa,4,Books,49.95,1.0
+Africa,4,Sports,,
+Africa,4,Various,,
+Africa,4,Videos,,
+Africa,5,Books,,
+Africa,5,Sports,,
+Africa,5,Various,,
+Africa,5,Videos,,
+Africa,6,Books,,
+Africa,6,Sports,,
+Africa,6,Various,,
+Africa,6,Videos,,
+Africa,7,Books,,
+Africa,7,Sports,,
+Africa,7,Various,,
+Africa,7,Videos,,
+Africa,8,Books,,
+Africa,8,Sports,,
+Africa,8,Various,,
+Africa,8,Videos,,
+Africa,9,Books,,
+Africa,9,Sports,,
+Africa,9,Various,,
+Africa,9,Videos,,
+Africa,10,Books,,
+Africa,10,Sports,,
+Africa,10,Various,,
+Africa,10,Videos,,
+Africa,11,Books,,
+Africa,11,Sports,,
+Africa,11,Various,,
+Africa,11,Videos,,
+Africa,12,Books,,
+Africa,12,Sports,,
+Africa,12,Various,,
+Africa,12,Videos,,
+Africa,1,Books,,
+Africa,1,Sports,,
+Africa,1,Various,,
+Africa,1,Videos,,
+Africa,2,Books,,
+Africa,2,Sports,,
+Africa,2,Various,,
+Africa,2,Videos,,
+Africa,3,Books,,
+Africa,3,Sports,,
+Africa,3,Various,,
+Africa,3,Videos,,
+Africa,4,Books,,
+Africa,4,Sports,,
+Africa,4,Various,,
+Africa,4,Videos,,
+Africa,5,Books,,
+Africa,5,Sports,160.77,1.0
+Africa,5,Various,,
+Africa,5,Videos,,
+Africa,6,Books,,
+Africa,6,Sports,,
+Africa,6,Various,,
+Africa,6,Videos,,
+Africa,7,Books,,
+Africa,7,Sports,,
+Africa,7,Various,,
+Africa,7,Videos,,
+Africa,8,Books,,
+Africa,8,Sports,,
+Africa,8,Various,,
+Africa,8,Videos,,
+Africa,9,Books,,
+Africa,9,Sports,,
+Africa,9,Various,,
+Africa,9,Videos,,
+Africa,10,Books,,
+Africa,10,Sports,,
+Africa,10,Various,,
+Africa,10,Videos,,
+Africa,11,Books,,
+Africa,11,Sports,,
+Africa,11,Various,,
+Africa,11,Videos,,
+Africa,12,Books,,
+Africa,12,Sports,,
+Africa,12,Various,,
+Africa,12,Videos,,
+Europe,1,Books,,
+Europe,1,Sports,49.0,1.0
+Europe,1,Various,41.32,1.0
+Europe,1,Videos,,
+Europe,2,Books,49.95,1.0
+Europe,2,Sports,413.85,3.0
+Europe,2,Various,,
+Europe,2,Videos,20.0,1.0
+Europe,3,Books,,
+Europe,3,Sports,407.75,2.0
+Europe,3,Various,,
+Europe,3,Videos,160.1,2.0
+Europe,4,Books,,
+Europe,4,Sports,45.52,1.0
+Europe,4,Various,,
+Europe,4,Videos,40.0,2.0
+Europe,5,Books,,
+Europe,5,Sports,435.53999999999996,4.0
+Europe,5,Various,,
+Europe,5,Videos,20.0,1.0
+Europe,6,Books,49.95,1.0
+Europe,6,Sports,126.0,1.0
+Europe,6,Various,242.5,1.0
+Europe,6,Videos,20.0,1.0
+Europe,7,Books,,
+Europe,7,Sports,239.05,4.0
+Europe,7,Various,,
+Europe,7,Videos,20.0,1.0
+Europe,8,Books,,
+Europe,8,Sports,25.0,1.0
+Europe,8,Various,,
+Europe,8,Videos,,
+Europe,9,Books,99.9,2.0
+Europe,9,Sports,311.0,3.0
+Europe,9,Various,,
+Europe,9,Videos,40.0,2.0
+Europe,10,Books,,
+Europe,10,Sports,216.5,2.0
+Europe,10,Various,,
+Europe,10,Videos,40.0,2.0
+Europe,11,Books,,
+Europe,11,Sports,91.5,2.0
+Europe,11,Various,,
+Europe,11,Videos,,
+Europe,12,Books,,
+Europe,12,Sports,122.5,2.0
+Europe,12,Various,41.32,1.0
+Europe,12,Videos,,
+Europe,1,Books,49.95,1.0
+Europe,1,Sports,371.67,4.0
+Europe,1,Various,,
+Europe,1,Videos,,
+Europe,2,Books,,
+Europe,2,Sports,142.0279,3.0
+Europe,2,Various,,
+Europe,2,Videos,,
+Europe,3,Books,49.95,1.0
+Europe,3,Sports,360.05899999999997,3.0
+Europe,3,Various,,
+Europe,3,Videos,,
+Europe,4,Books,,
+Europe,4,Sports,446.931,3.0
+Europe,4,Various,,
+Europe,4,Videos,,
+Europe,5,Books,,
+Europe,5,Sports,275.9,2.0
+Europe,5,Various,,
+Europe,5,Videos,,
+Europe,6,Books,49.95,1.0
+Europe,6,Sports,155.51,1.0
+Europe,6,Various,,
+Europe,6,Videos,49.0,5.0
+Europe,7,Books,150.14030000000002,3.0
+Europe,7,Sports,,
+Europe,7,Various,,
+Europe,7,Videos,,
+Europe,8,Books,99.9,2.0
+Europe,8,Sports,346.83,6.0
+Europe,8,Various,,
+Europe,8,Videos,,
+Europe,9,Books,,
+Europe,9,Sports,88.96000000000001,2.0
+Europe,9,Various,,
+Europe,9,Videos,,
+Europe,10,Books,50.2396,1.0
+Europe,10,Sports,63.0,2.0
+Europe,10,Various,,
+Europe,10,Videos,68.0,1.0
+Europe,11,Books,,
+Europe,11,Sports,129.54000000000002,2.0
+Europe,11,Various,311.32,2.0
+Europe,11,Videos,80.0,5.0
+Europe,12,Books,,
+Europe,12,Sports,569.4970000000001,5.0
+Europe,12,Various,,
+Europe,12,Videos,,
+North America,1,Books,,
+North America,1,Sports,49.5,1.0
+North America,1,Various,,
+North America,1,Videos,,
+North America,2,Books,,
+North America,2,Sports,,
+North America,2,Various,,
+North America,2,Videos,,
+North America,3,Books,,
+North America,3,Sports,,
+North America,3,Various,,
+North America,3,Videos,,
+North America,4,Books,50.5325,1.0
+North America,4,Sports,47.0,1.0
+North America,4,Various,,
+North America,4,Videos,,
+North America,5,Books,49.95,1.0
+North America,5,Sports,,
+North America,5,Various,,
+North America,5,Videos,,
+North America,6,Books,,
+North America,6,Sports,28.0,2.0
+North America,6,Various,,
+North America,6,Videos,108.25,1.0
+North America,7,Books,,
+North America,7,Sports,29.0,1.0
+North America,7,Various,,
+North America,7,Videos,,
+North America,8,Books,49.95,1.0
+North America,8,Sports,,
+North America,8,Various,,
+North America,8,Videos,,
+North America,9,Books,,
+North America,9,Sports,162.71,1.0
+North America,9,Various,,
+North America,9,Videos,,
+North America,10,Books,,
+North America,10,Sports,,
+North America,10,Various,,
+North America,10,Videos,,
+North America,11,Books,,
+North America,11,Sports,,
+North America,11,Various,,
+North America,11,Videos,,
+North America,12,Books,,
+North America,12,Sports,44.08,1.0
+North America,12,Various,,
+North America,12,Videos,,
+North America,1,Books,,
+North America,1,Sports,,
+North America,1,Various,,
+North America,1,Videos,92.233,1.0
+North America,2,Books,49.95,1.0
+North America,2,Sports,317.6,2.0
+North America,2,Various,,
+North America,2,Videos,,
+North America,3,Books,,
+North America,3,Sports,44.03,1.0
+North America,3,Various,,
+North America,3,Videos,,
+North America,4,Books,,
+North America,4,Sports,,
+North America,4,Various,,
+North America,4,Videos,,
+North America,5,Books,49.95,1.0
+North America,5,Sports,,
+North America,5,Various,,
+North America,5,Videos,,
+North America,6,Books,49.3507,1.0
+North America,6,Sports,,
+North America,6,Various,,
+North America,6,Videos,,
+North America,7,Books,,
+North America,7,Sports,216.74,2.0
+North America,7,Various,50.0,1.0
+North America,7,Videos,,
+North America,8,Books,,
+North America,8,Sports,,
+North America,8,Various,,
+North America,8,Videos,,
+North America,9,Books,,
+North America,9,Sports,171.25,1.0
+North America,9,Various,,
+North America,9,Videos,,
+North America,10,Books,,
+North America,10,Sports,,
+North America,10,Various,,
+North America,10,Videos,,
+North America,11,Books,,
+North America,11,Sports,,
+North America,11,Various,,
+North America,11,Videos,,
+North America,12,Books,,
+North America,12,Sports,,
+North America,12,Various,,
+North America,12,Videos,,
+South America,1,Books,,
+South America,1,Sports,101.58,1.0
+South America,1,Various,,
+South America,1,Videos,,
+South America,2,Books,,
+South America,2,Sports,361.5,4.0
+South America,2,Various,,
+South America,2,Videos,,
+South America,3,Books,,
+South America,3,Sports,59.83,2.0
+South America,3,Various,,
+South America,3,Videos,,
+South America,4,Books,97.9092,2.0
+South America,4,Sports,14.0,1.0
+South America,4,Various,,
+South America,4,Videos,,
+South America,5,Books,,
+South America,5,Sports,236.5,3.0
+South America,5,Various,,
+South America,5,Videos,,
+South America,6,Books,,
+South America,6,Sports,,
+South America,6,Various,,
+South America,6,Videos,,
+South America,7,Books,,
+South America,7,Sports,,
+South America,7,Various,,
+South America,7,Videos,,
+South America,8,Books,,
+South America,8,Sports,43.0,2.0
+South America,8,Various,,
+South America,8,Videos,20.0,1.0
+South America,9,Books,,
+South America,9,Sports,,
+South America,9,Various,,
+South America,9,Videos,,
+South America,10,Books,,
+South America,10,Sports,169.37,3.0
+South America,10,Various,,
+South America,10,Videos,,
+South America,11,Books,,
+South America,11,Sports,241.12,3.0
+South America,11,Various,,
+South America,11,Videos,20.0,1.0
+South America,12,Books,,
+South America,12,Sports,42.07,1.0
+South America,12,Various,,
+South America,12,Videos,,
+South America,1,Books,,
+South America,1,Sports,258.449,2.0
+South America,1,Various,,
+South America,1,Videos,,
+South America,2,Books,,
+South America,2,Sports,242.421,2.0
+South America,2,Various,,
+South America,2,Videos,26.95,2.0
+South America,3,Books,99.9,2.0
+South America,3,Sports,44.65,2.0
+South America,3,Various,,
+South America,3,Videos,22.0,11.0
+South America,4,Books,49.95,1.0
+South America,4,Sports,50.0,4.0
+South America,4,Various,,
+South America,4,Videos,168.25,8.0
+South America,5,Books,,
+South America,5,Sports,510.82090000000005,5.0
+South America,5,Various,,
+South America,5,Videos,,
+South America,6,Books,,
+South America,6,Sports,323.68,2.0
+South America,6,Various,,
+South America,6,Videos,,
+South America,7,Books,,
+South America,7,Sports,45.2676,1.0
+South America,7,Various,,
+South America,7,Videos,60.0,7.0
+South America,8,Books,,
+South America,8,Sports,94.52,1.0
+South America,8,Various,,
+South America,8,Videos,,
+South America,9,Books,,
+South America,9,Sports,319.37,3.0
+South America,9,Various,,
+South America,9,Videos,157.8,1.0
+South America,10,Books,,
+South America,10,Sports,360.6,3.0
+South America,10,Various,,
+South America,10,Videos,,
+South America,11,Books,,
+South America,11,Sports,277.8,4.0
+South America,11,Various,,
+South America,11,Videos,,
+South America,12,Books,,
+South America,12,Sports,628.22,5.0
+South America,12,Various,,
+South America,12,Videos,,
