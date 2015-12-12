@@ -19,8 +19,8 @@ describe "Cube metadata API" do
 
   it "should return a list of cubes" do
     get '/cubes'
-    expected = {"cubes"=>["Sales 2", "Warehouse", "Sales Ragged", "Store", "HR", "Warehouse and Sales", "Sales"]}
-    expect(JSON.parse(last_response.body)).to eq(expected)
+    expected = ["Sales 2", "Warehouse", "Sales Ragged", "Store", "HR", "Warehouse and Sales", "Sales"].sort
+    expect(JSON.parse(last_response.body)['cubes'].sort).to eq(expected)
   end
 
   it "should return the definition of a cube" do
