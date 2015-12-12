@@ -43,7 +43,7 @@ end
 PARAMS = {
   driver: 'jdbc',
   jdbc_driver: 'org.apache.derby.jdbc.EmbeddedDriver',
-  jdbc_url: "jdbc:derby:#{File.join(FIXTURES, 'derby-foodmart')}",
+  jdbc_url: "jdbc:derby:#{File.join(FIXTURES, 'foodmart')}",
   username: 'sa',
   password: 'sa',
   catalog: File.join(FIXTURES, 'foodmart.xml')

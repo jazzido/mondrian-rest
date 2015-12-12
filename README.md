@@ -1,4 +1,4 @@
-# mondrian-rest
+# mondrian-rest [![Build Status](https://travis-ci.org/jazzido/mondrian-rest.svg?branch=public)](https://travis-ci.org/jazzido/mondrian-rest)
 
 A REST endpoint for [Mondrian](http://community.pentaho.com/projects/mondrian/)
 
