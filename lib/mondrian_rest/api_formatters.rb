@@ -25,9 +25,8 @@ module Mondrian::REST::Formatters
   module CSV
     def self.call(obj, env)
       rows = Mondrian::REST::Formatters.tidy(obj)
-      CSV.generate do |csv|
+      ::CSV.generate do |csv|
         # header
-        csv << rows.next
         rows.each { |row| csv << row }
       end
     end
