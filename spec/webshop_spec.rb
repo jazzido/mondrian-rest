@@ -48,4 +48,9 @@ describe "Webshop" do
     expect(CSV.parse(last_response.body)).to eq(CSV.read(File.join(File.dirname(__FILE__), 'fixtures', 'webshop_1.csv')))
   end
 
+  it "should drilldown by country, month, and product category and return XLS" do
+    get '/cubes/Sales/aggregate.xls?drilldown[]=Country&drilldown[]=Date.Month&drilldown[]=Product.Category&measures[]=Price%20Total&measures[]=Quantity'
+    # XXX TODO assert contents of XLS
+    expect(last_response.headers['Content-Type']).to eq('application/vnd.ms-excel')
+  end
 end
