@@ -8,17 +8,22 @@ module Mondrian
             {
               name: h.name,
               has_all: h.has_all?,
-              levels: h.levels.map { |l|
-                {
-                  name: l.name,
-                  members: l.members
-                    .uniq { |m| m.property_value('MEMBER_KEY') }
-                    .map(&:to_h)
-                } #/levels
-              } #/map
+              levels: h.levels.map(&:to_h) #/levels
             } # /hierarchies
           } #/map
         } #/ dimension
+      end
+    end
+
+    class Level
+      def to_h
+        {
+          name: self.name,
+          caption: self.caption,
+          members: self.members
+            .uniq { |m| m.property_value('MEMBER_KEY') }
+            .map(&:to_h)
+        }
       end
     end
 

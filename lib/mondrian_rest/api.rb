@@ -76,6 +76,14 @@ module Mondrian::REST
             resource :levels do
               route_param :level_name do
                 resource :members do
+
+                  get do
+                    cube = get_cube_or_404(params[:cube_name])
+                    dimension = cube.dimension(params[:dimension_name])
+                    level = dimension.hierarchies[0].level(params[:level_name])
+                    level.to_h
+                  end
+
                   route_param :member_key,
                               type: String,
                               requirements: { member_key: /[a-z0-9\.\-\s]+/i } do
