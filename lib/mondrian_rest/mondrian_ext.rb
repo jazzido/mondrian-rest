@@ -22,7 +22,26 @@ module Mondrian
       end
     end
 
+    class Level
+      attr_reader :hierarchy
+
+      def to_h
+        {
+          name: self.name,
+          caption: self.caption,
+          members: self.members
+            .uniq { |m| m.property_value('MEMBER_KEY') }
+            .map(&:to_h)
+        }
+      end
+    end
+
     class Member
+
+      def raw_level
+        @raw_member.getLevel
+      end
+
       def to_h
         kv = [:name, :full_name, :caption, :all_member?,
               :drillable?, :depth, :dimension_type].map { |m|

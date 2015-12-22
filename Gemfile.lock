@@ -1,9 +1,11 @@
-GIT
-  remote: https://github.com/rsim/mondrian-olap.git
-  revision: 70673f96f964fad304c79351369c24d9f76ce52f
+PATH
+  remote: .
   specs:
-    mondrian-olap (0.6.0)
-      nokogiri
+    mondrian-rest (0.5.0-java)
+      grape (~> 0.14.0)
+      mondrian-olap (~> 0.7.0)
+      null_logger (~> 0.0.1)
+      spreadsheet (~> 1.1, >= 1.1.0)
 
 GEM
   remote: http://rubygems.org/
@@ -19,15 +21,12 @@ GEM
       ice_nine (~> 0.11.0)
       thread_safe (~> 0.3, >= 0.3.1)
     builder (3.2.2)
-    coderay (1.1.0)
     coercible (1.0.0)
       descendants_tracker (~> 0.0.1)
-    columnize (0.9.0)
     descendants_tracker (0.0.4)
       thread_safe (~> 0.3, >= 0.3.1)
     diff-lcs (1.2.5)
     equalizer (0.0.11)
-    ffi (1.9.10-java)
     grape (0.14.0)
       activesupport
       builder
@@ -44,18 +43,13 @@ GEM
     jdbc-derby (10.11.1.1)
     jdbc-sqlite3 (3.8.11.2)
     json (1.8.3-java)
-    linecache (1.3.1-java)
-    method_source (0.8.2)
     minitest (5.8.3)
+    mondrian-olap (0.7.0)
+      nokogiri
     multi_json (1.11.2)
     multi_xml (0.5.5)
-    nokogiri (1.6.7-java)
+    nokogiri (1.6.7.1-java)
     null_logger (0.0.1)
-    pry (0.10.3-java)
-      coderay (~> 1.1.0)
-      method_source (~> 0.8.1)
-      slop (~> 3.4)
-      spoon (~> 0.0)
     rack (1.6.4)
     rack-accept (0.4.5)
       rack (>= 0.4)
@@ -77,16 +71,8 @@ GEM
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.4.0)
     rspec-support (3.4.1)
-    ruby-debug (0.10.6)
-      columnize (>= 0.1)
-      linecache (~> 1.3.1)
-      ruby-debug-base (~> 0.10.6.0)
-    ruby-debug-base (0.10.6-java)
     ruby-ole (1.2.11.8)
     rubyzip (1.1.7)
-    slop (3.6.0)
-    spoon (0.0.4)
-      ffi
     spreadsheet (1.1.0)
       ruby-ole (>= 1.0)
     thread_safe (0.3.5-java)
@@ -102,18 +88,13 @@ PLATFORMS
   java
 
 DEPENDENCIES
-  grape
-  jdbc-derby
-  jdbc-sqlite3
-  mondrian-olap!
-  null_logger
-  pry
-  rack-test
-  rake
-  rspec
-  ruby-debug
-  rubyzip
-  spreadsheet
+  jdbc-derby (~> 10.11, >= 10.11.1.1)
+  jdbc-sqlite3 (~> 3.8, >= 3.8.11.2)
+  mondrian-rest!
+  rack-test (~> 0.6.3)
+  rake (~> 10.4, >= 10.4.2)
+  rspec (~> 3.4, >= 3.4.0)
+  rubyzip (~> 1.1, >= 1.1.7)
 
 BUNDLED WITH
    1.10.6

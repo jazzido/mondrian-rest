@@ -38,12 +38,12 @@ describe "Query Builder" do
   end
 
   it "should generate a set expression from a drilldown spec" do
-    expect(@qh.parse_drilldown(@cube, 'Store')).to eq('[Store].[Store Country].Members')
+    expect(@qh.parse_drilldown(@cube, 'Store').raw_level.unique_name).to eq('[Store].[Store Country]')
   end
 
   it "should error out if a key expression is given as a drilldown spec" do
     expect(@qh).to receive(:"error!").with(kind_of(String), 400)
-    @qh.parse_drilldown(@cube, 'Product.Product Category.&Drink')
+    @qh.parse_drilldown(@cube, 'Product.Product Family.&Drink')
   end
 
   it "should generate an MDX query that aggregates the default measure across the entire cube" do
@@ -76,6 +76,16 @@ describe "Query Builder" do
                           'drilldown' => ['Product.Product Category'],
                           'cut' => ['Time.Year.1997']
                         })
-    puts q.to_mdx
+    expect(q.to_mdx).to eq("SELECT {[Measures].[Unit Sales]} ON COLUMNS,\n[Product].[Product Category].Members ON ROWS\nFROM [Sales]\nWHERE ([Time].[1997])")
   end
+
+  it "should aggregate on the next level of the dimension in the cut" do
+    q = @qh.build_query(@cube,
+                        {
+                          'cut' => ['Product.Product Family.Drink'],
+                          'drilldown' => ['Product']
+                        })
+    expect(q.to_mdx).to eq("SELECT {[Measures].[Unit Sales]} ON COLUMNS,\n[Product].[Drink].Children ON ROWS\nFROM [Sales]")
+  end
+
 end

@@ -1,7 +1,7 @@
 require 'json'
 require 'spec_helper.rb'
 
-describe "Cube metadata API" do
+describe "Cube API" do
 
   include Rack::Test::Methods
 
@@ -73,4 +73,10 @@ describe "Cube metadata API" do
             [[nil], [nil], [nil]]]]
     expect(exp).to eq(JSON.parse(last_response.body)['values'])
   end
+
+  it "should aggregate on the next level of the dimension in the cut" do
+    get '/cubes/Sales/aggregate?drilldown[]=Product&measures[]=Store%20Sales&cut[]=Product.Product%20Family.Drink'
+    puts last_response.body
+  end
+
 end
