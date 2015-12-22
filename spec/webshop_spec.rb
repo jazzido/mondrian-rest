@@ -1,6 +1,5 @@
 require 'json'
 require 'pp'
-require 'pry'
 
 require 'spec_helper.rb'
 

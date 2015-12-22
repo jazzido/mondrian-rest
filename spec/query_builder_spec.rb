@@ -1,8 +1,6 @@
 require 'json'
 require 'spec_helper.rb'
 
-require 'pry'
-
 describe "Query Builder" do
   class QueryHelper
     include Mondrian::REST::QueryHelper
