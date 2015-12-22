@@ -16,15 +16,13 @@ Gem::Specification.new do |s|
 
   s.add_runtime_dependency "mondrian-olap", ["~> 0.7.0"]
   s.add_runtime_dependency "grape", ["~> 0.14.0"]
-  s.add_runtime_dependency "spreadsheet", ["~> 1.1.0"]
+  s.add_runtime_dependency 'spreadsheet', '~> 1.1', '>= 1.1.0'
   s.add_runtime_dependency "null_logger", ["~> 0.0.1"]
 
-  s.add_development_dependency 'bundler'
-  s.add_development_dependency 'pry'
-  s.add_development_dependency 'rake'
-  s.add_development_dependency 'rspec'
-  s.add_development_dependency 'jdbc-derby'
-  s.add_development_dependency 'jdbc-sqlite3'
-  s.add_development_dependency 'rack-test'
-  s.add_development_dependency 'rubyzip'
+  s.add_development_dependency 'rake', '~> 10.4', '>= 10.4.2'
+  s.add_development_dependency 'rspec', '~> 3.4', '>= 3.4.0'
+  s.add_development_dependency 'jdbc-derby', '~> 10.11', '>= 10.11.1.1'
+  s.add_development_dependency 'jdbc-sqlite3', '~> 3.8', '>= 3.8.11.2'
+  s.add_development_dependency 'rack-test', '~> 0.6.3'
+  s.add_development_dependency 'rubyzip', '~> 1.1', '>= 1.1.7'
 end
