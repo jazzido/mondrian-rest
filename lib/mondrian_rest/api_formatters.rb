@@ -11,7 +11,6 @@ module Mondrian::REST::Formatters
 
       Mondrian::REST::Formatters.tidy(obj).each_with_index { |row, i|
         row.each_with_index { |cell, j|
-          puts "(#{i},#{j}) #{cell}"
           sheet.write(i, j, cell)
         }
       }
