@@ -1,24 +1,22 @@
 require 'csv'
-require 'spreadsheet'
+require 'writeexcel'
 
 module Mondrian::REST::Formatters
 
   module XLS
     def self.call(obj, env)
-      book = Spreadsheet::Workbook.new
-      sheet = book.create_worksheet
-      sheet.row(0).default_format = Spreadsheet::Format.new(
-        :weight => :bold,
-        :horizontal_align => :center,
-        :bottom => :medium,
-        :locked => true
-      )
-      Mondrian::REST::Formatters.tidy(obj).each_with_index { |row, i|
-        sheet.row(i).replace(row)
-      }
       out = StringIO.new
-      book.write(out)
-      out.read
+      book = WriteExcel.new(out)
+      sheet = book.add_worksheet
+
+      Mondrian::REST::Formatters.tidy(obj).each_with_index { |row, i|
+        row.each_with_index { |cell, j|
+          puts "(#{i},#{j}) #{cell}"
+          sheet.write(i, j, cell)
+        }
+      }
+      book.close
+      out.string
     end
   end
 
