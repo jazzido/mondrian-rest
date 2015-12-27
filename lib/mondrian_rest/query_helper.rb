@@ -88,14 +88,19 @@ module Mondrian::REST
       dd = query_axes.map do |qa|
         sa_idx = slicer_axis.index { |sa| sa.raw_level.hierarchy == qa.raw_level.hierarchy }
         m = nil
-        if sa_idx.nil?
+        if sa_idx.nil? # no slice (cut) on this axis
           m = qa.raw_level.unique_name + '.Members'
         else
           sa = slicer_axis[sa_idx]
           slicer_axis.delete_at(sa_idx)
 
+          if sa.raw_level.depth > qa.depth
+            error!("#{sa.raw_level.unique_name} is above #{qa.raw_level.unique_name}, can't drilldown", 400)
+          end
+
           if sa.drillable?
-            m = sa.full_name + '.Children'
+            dist = qa.depth - sa.raw_level.depth
+            m = "Descendants(#{sa.full_name}, #{dist == 0 ? 1 : dist})"
           else
             m = "{#{sa.full_name}}"
           end

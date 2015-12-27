@@ -77,6 +77,18 @@ describe "Cube API" do
   it "should aggregate on the next level of the dimension in the cut" do
     get '/cubes/Sales/aggregate?drilldown[]=Product&measures[]=Store%20Sales&cut[]=Product.Product%20Family.Drink'
     puts last_response.body
+    # XXX TODO assertions
+  end
+
+  it "should cut and drilldown skipping levels correctly" do
+    get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&cut[]=Customers.Country.USA'
+    exp = ["Altadena", "Arcadia", "Bellflower", "Berkeley", "Beverly Hills", "Burbank", "Burlingame", "Chula Vista", "Colma", "Concord", "Coronado", "Daly City", "Downey", "El Cajon", "Fremont", "Glendale", "Grossmont", "Imperial Beach", "La Jolla", "La Mesa", "Lakewood", "Lemon Grove", "Lincoln Acres", "Long Beach", "Los Angeles", "Mill Valley", "National City", "Newport Beach", "Novato", "Oakland", "Palo Alto", "Pomona", "Redwood City", "Richmond", "San Carlos", "San Diego", "San Francisco", "San Gabriel", "San Jose", "Santa Cruz", "Santa Monica", "Spring Valley", "Torrance", "West Covina", "Woodland Hills", "Albany", "Beaverton", "Corvallis", "Lake Oswego", "Lebanon", "Milwaukie", "Oregon City", "Portland", "Salem", "W. Linn", "Woodburn", "Anacortes", "Ballard", "Bellingham", "Bremerton", "Burien", "Edmonds", "Everett", "Issaquah", "Kirkland", "Lynnwood", "Marysville", "Olympia", "Port Orchard", "Puyallup", "Redmond", "Renton", "Seattle", "Sedro Woolley", "Spokane", "Tacoma", "Walla Walla", "Yakima"]
+    expect(exp).to eq(JSON.parse(last_response.body)['axes'][2]['members'].map { |m| m['caption'] })
+  end
+
+  it "should not allow drilling down on an ascendant" do
+    get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.Country&measures[]=Store%20Sales&cut[]=Customers.USA.OR.Lake%20Oswego'
+    expect(400).to eq(last_response.status)
   end
 
 end

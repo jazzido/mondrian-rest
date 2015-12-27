@@ -83,7 +83,7 @@ describe "Query Builder" do
                           'cut' => ['Product.Product Family.Drink'],
                           'drilldown' => ['Product']
                         })
-    expect(q.to_mdx).to eq("SELECT {[Measures].[Unit Sales]} ON COLUMNS,\n[Product].[Drink].Children ON ROWS\nFROM [Sales]")
+    expect(q.to_mdx).to eq("SELECT {[Measures].[Unit Sales]} ON COLUMNS,\nDescendants([Product].[Drink], 1) ON ROWS\nFROM [Sales]")
   end
 
 end
