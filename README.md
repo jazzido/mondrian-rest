@@ -2,13 +2,13 @@
 
 A REST endpoint for [Mondrian](http://community.pentaho.com/projects/mondrian/)
 
+## Usage
+
+See [`mondrian-demo`](https://github.com/jazzido/mondrian-rest-demo) for an example OLAP cube implemented with `mondrian-rest`.
+
 ## Installation
 
 TODO: Describe the installation process
-
-## Usage
-
-TODO: Write usage instructions
 
 ## Contributing
 
