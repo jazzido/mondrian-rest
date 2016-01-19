@@ -15,6 +15,7 @@ module Mondrian::REST
       desc "Execute an MDX query against a cube"
       content_type :txt, "text/plain"
       post do
+        status 200
         rbody = env['api.request.body']
         mdx(rbody)
       end
@@ -54,7 +55,6 @@ module Mondrian::REST
           get do
             cube = get_cube_or_404(params[:cube_name])
             query = build_query(cube, params)
-            puts query.to_mdx
             mdx(query.to_mdx)
           end
         end
