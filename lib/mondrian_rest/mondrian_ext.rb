@@ -40,8 +40,8 @@ module Mondrian
               :drillable?, :depth, :dimension_type].map { |m|
           [m, self.send(m)]
         }
-        kv << ['key', self.property_value('MEMBER_KEY')]
-        kv << ['num_children', self.property_value('CHILDREN_CARDINALITY')]
+        kv << [:key, self.property_value('MEMBER_KEY')]
+        kv << [:num_children, self.property_value('CHILDREN_CARDINALITY')]
         Hash[kv]
       end
 
