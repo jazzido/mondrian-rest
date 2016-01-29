@@ -64,7 +64,9 @@ module Mondrian::REST
       options = {
         'cut' => [],
         'drilldown' => [],
-        'measures' => [measure_members.first.name]
+        'measures' => [measure_members.first.name],
+        'nonempty' => false,
+        'distinct' => false
       }.merge(options)
 
       # validate measures exist
@@ -80,6 +82,9 @@ module Mondrian::REST
                     *options['measures'].map { |m|
                       measure_members.find { |cm| cm.name == m }.full_name
                     })
+      if params['nonempty']
+        query = query.nonempty
+      end
       axis_idx = 1
 
       query_axes = options['drilldown'].map { |dd| parse_drilldown(cube, dd) }
@@ -112,6 +117,15 @@ module Mondrian::REST
       dd.each do |ds|
         query = query.axis(axis_idx,
                            ds)
+
+        if params['distinct']
+          query = query.distinct
+        end
+
+        if params['nonempty']
+          query = query.nonempty
+        end
+
         axis_idx += 1
       end
 
@@ -119,6 +133,7 @@ module Mondrian::REST
       if slicer_axis.size >= 1
         query = query.where(slicer_axis.map(&:full_name))
       end
+      puts query.to_mdx
       query
     end
   end

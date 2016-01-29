@@ -51,6 +51,8 @@ module Mondrian::REST
             optional :measures, type: Array
             optional :cut, type: Array, desc: "Specification of slicer axis"
             optional :drilldown, type: Array, desc: "Dimension(s) to be drilled down"
+            optional :nonempty, type: Boolean, desc: "Only return non empty cells"
+            optional :distinct, type: Boolean, desc: "Apply DISTINCT() to every axis"
           end
           get do
             cube = get_cube_or_404(params[:cube_name])
