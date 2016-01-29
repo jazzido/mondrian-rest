@@ -82,7 +82,7 @@ module Mondrian::REST
                     *options['measures'].map { |m|
                       measure_members.find { |cm| cm.name == m }.full_name
                     })
-      if params['nonempty']
+      if options['nonempty']
         query = query.nonempty
       end
       axis_idx = 1
@@ -118,11 +118,11 @@ module Mondrian::REST
         query = query.axis(axis_idx,
                            ds)
 
-        if params['distinct']
+        if options['distinct']
           query = query.distinct
         end
 
-        if params['nonempty']
+        if options['nonempty']
           query = query.nonempty
         end
 
