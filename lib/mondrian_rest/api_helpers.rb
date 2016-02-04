@@ -46,9 +46,10 @@ module Mondrian::REST
         }
 
         {
-          'name' => cube.name,
-          'dimensions' => dimensions,
-          'measures' => cube.dimensions
+          :name => cube.name,
+          :annotations => cube.annotations,
+          :dimensions => dimensions,
+          :measures => cube.dimensions
                        .find(&:measures?)
                        .hierarchy
                        .levels.first
@@ -58,7 +59,8 @@ module Mondrian::REST
                          {
                            :name => m.name,
                            :caption => m.caption,
-                           :annotations => m.annotations
+                           :annotations => m.annotations,
+                           :full_name => m.full_name
                          }
                         }
         }
