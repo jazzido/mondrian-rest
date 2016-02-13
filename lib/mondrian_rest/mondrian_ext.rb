@@ -37,11 +37,12 @@ module Mondrian
 
       def to_h
         kv = [:name, :full_name, :caption, :all_member?,
-              :drillable?, :depth, :dimension_type].map { |m|
+              :drillable?, :depth].map { |m|
           [m, self.send(m)]
         }
         kv << [:key, self.property_value('MEMBER_KEY')]
         kv << [:num_children, self.property_value('CHILDREN_CARDINALITY')]
+        kv << [:parent_name, self.property_value('PARENT_UNIQUE_NAME')]
         Hash[kv]
       end
 
