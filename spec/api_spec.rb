@@ -47,6 +47,16 @@ describe "Cube API" do
     expect(m['full_name']).to eq('[Product].[Drink]')
   end
 
+  it "should return a member by full name" do
+    get '/cubes/Sales%202/members/%5BProduct%5D.%5BDrink%5D'
+    expect(JSON.parse(last_response.body)).to eq({"name"=>"Drink", "full_name"=>"[Product].[Drink]", "caption"=>"Drink", "all_member?"=>false, "drillable?"=>true, "depth"=>1, "key"=>"Drink", "num_children"=>3, "parent_name"=>"[Product].[All Products]"})
+  end
+
+  it "should return 404 if member can't be found" do
+    get '/cubes/Sales%202/members/%5BProduct%5D.%5BDoesNotExist%5D'
+    expect(404).to eq(last_response.status)
+  end
+
   it "should 404 if measure does not exist" do
     get '/cubes/Sales/aggregate?measures[]=doesnotexist'
     expect(404).to eq(last_response.status)

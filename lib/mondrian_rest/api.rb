@@ -40,6 +40,21 @@ module Mondrian::REST
           cube_def(cube)
         end
 
+        resource :members do
+            desc "return a member by its full name"
+            get ':member_full_name',
+                requirements: { member_full_name: /[a-z0-9\.\-\s%\\[\\]]+/i } do
+
+              m = get_member(get_cube_or_404(params[:cube_name]),
+                             params[:member_full_name])
+              if m.nil?
+                error!("Member `#{params[:member_full_name]}` not found in cube `${params[:cube_name]}`", 404)
+              end
+              m.to_h
+            end
+        end
+
+
         resource :aggregate do
           content_type :xls, "application/vnd.ms-excel"
           formatter :xls, Mondrian::REST::Formatters::XLS
