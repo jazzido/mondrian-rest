@@ -49,7 +49,8 @@ describe "Cube API" do
 
   it "should return a member by full name" do
     get '/cubes/Sales%202/members/%5BProduct%5D.%5BDrink%5D'
-    expect(JSON.parse(last_response.body)).to eq({"name"=>"Drink", "full_name"=>"[Product].[Drink]", "caption"=>"Drink", "all_member?"=>false, "drillable?"=>true, "depth"=>1, "key"=>"Drink", "num_children"=>3, "parent_name"=>"[Product].[All Products]"})
+    expected = {"name"=>"Drink", "full_name"=>"[Product].[Drink]", "caption"=>"Drink", "all_member?"=>false, "drillable?"=>true, "depth"=>1, "key"=>"Drink", "num_children"=>3, "parent_name"=>"[Product].[All Products]", "ancestors"=>[{"name"=>"All Products", "full_name"=>"[Product].[All Products]", "caption"=>"All Products", "all_member?"=>true, "drillable?"=>true, "depth"=>0, "key"=>0, "num_children"=>3, "parent_name"=>nil}]}
+    expect(JSON.parse(last_response.body)).to eq(expected)
   end
 
   it "should return 404 if member can't be found" do
