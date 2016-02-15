@@ -48,7 +48,7 @@ module Mondrian::REST
               m = get_member(get_cube_or_404(params[:cube_name]),
                              params[:member_full_name])
               if m.nil?
-                error!("Member `#{params[:member_full_name]}` not found in cube `${params[:cube_name]}`", 404)
+                error!("Member `#{params[:member_full_name]}` not found in cube `#{params[:cube_name]}`", 404)
               end
               m.to_h.merge({ancestors: m.ancestors.map(&:to_h)})
             end
