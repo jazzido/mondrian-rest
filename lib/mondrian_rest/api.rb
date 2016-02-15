@@ -50,7 +50,10 @@ module Mondrian::REST
               if m.nil?
                 error!("Member `#{params[:member_full_name]}` not found in cube `#{params[:cube_name]}`", 404)
               end
-              m.to_h.merge({ancestors: m.ancestors.map(&:to_h)})
+              m.to_h.merge({
+                             ancestors: m.ancestors.map(&:to_h),
+                             dimension: m.dimension_info
+                           })
             end
         end
 
