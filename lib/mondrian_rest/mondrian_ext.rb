@@ -18,6 +18,10 @@ module Mondrian
     class Level
       attr_reader :hierarchy
 
+      def full_name
+        @full_name ||= @raw_level.getUniqueName
+      end
+
       def to_h
         {
           name: self.name,

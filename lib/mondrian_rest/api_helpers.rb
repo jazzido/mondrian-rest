@@ -37,6 +37,7 @@ module Mondrian::REST
                 :levels => h.levels.map { |l|
                   {
                     :name => l.name,
+                    :full_name => l.full_name,
                     :caption => l.caption
                   }
                 }
