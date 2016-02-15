@@ -56,14 +56,14 @@ module Mondrian::REST
                        .levels.first
                        .members
                        .find_all(&:visible?)
-                       .map { |m|
+                       .map do |m|
                          {
                            :name => m.name,
                            :caption => m.caption,
                            :annotations => m.annotations,
                            :full_name => m.full_name
                          }
-                        }
+                       end
         }
       end
   end
