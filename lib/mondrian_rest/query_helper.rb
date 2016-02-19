@@ -133,7 +133,6 @@ module Mondrian::REST
       if slicer_axis.size >= 1
         query = query.where(slicer_axis.map(&:full_name))
       end
-      puts query.to_mdx
       query
     end
   end
