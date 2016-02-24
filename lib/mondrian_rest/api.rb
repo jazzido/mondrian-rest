@@ -63,6 +63,8 @@ module Mondrian::REST
           formatter :xls, Mondrian::REST::Formatters::XLS
           content_type :csv, "text/csv"
           formatter :csv, Mondrian::REST::Formatters::CSV
+          content_type :json, "application/json"
+          formatter :json, Mondrian::REST::Formatters::AggregationJSON
 
           desc "aggregate from query parameters"
           params do
@@ -71,6 +73,7 @@ module Mondrian::REST
             optional :drilldown, type: Array, desc: "Dimension(s) to be drilled down"
             optional :nonempty, type: Boolean, desc: "Only return non empty cells"
             optional :distinct, type: Boolean, desc: "Apply DISTINCT() to every axis"
+            optional :parents, type: Boolean, desc: "Include members' parent"
           end
           get do
             cube = get_cube_or_404(params[:cube_name])

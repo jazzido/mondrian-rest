@@ -1,6 +1,5 @@
 module Mondrian
   module OLAP
-
     class Dimension
       def to_h
         {
@@ -73,17 +72,22 @@ module Mondrian
         to_h.to_json
       end
 
-      def to_h
+      def to_h(parents=false)
         # XXX TODO
         # return the contents of the filter axis
         # puts self.raw_cell_set.getFilterAxis.inspect
+
         dimensions = [''] * self.axis_members.size
         {
           axes: self.axis_members.each_with_index.map { |a, i|
             {
               members: a.map { |m|
                 dimensions[i] = m.dimension_info
-                m.to_h
+                mh = m.to_h
+                if parents
+                  mh.merge!({:parent => m.ancestors.first.to_h})
+                end
+                mh
               },
             }
           },

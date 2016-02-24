@@ -102,4 +102,18 @@ describe "Cube API" do
     expect(400).to eq(last_response.status)
   end
 
+  it "should return the members' parent if specified in the query string" do
+    get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&parents=true'
+    JSON.parse(last_response.body)['axes'][2]['members'].each { |m|
+      expect(m['parent_name']).to eq(m['parent']['full_name'])
+    }
+  end
+
+  it "should not return the members' parent if not specified in the query string" do
+    get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales'
+    JSON.parse(last_response.body)['axes'][2]['members'].each { |m|
+      expect(m['parent']).to be(nil)
+    }
+  end
+
 end
