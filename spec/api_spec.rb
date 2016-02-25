@@ -115,5 +115,4 @@ describe "Cube API" do
       expect(m['parent']).to be(nil)
     }
   end
-
 end
