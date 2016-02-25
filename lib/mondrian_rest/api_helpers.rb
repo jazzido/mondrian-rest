@@ -27,6 +27,7 @@ module Mondrian::REST
                      .map { |d|
           {
             :name => d.name,
+            :caption => d.caption,
             :type => d.dimension_type,
             :annotations => d.annotations,
             :hierarchies => d.hierarchies.map { |h|
