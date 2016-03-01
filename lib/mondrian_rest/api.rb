@@ -16,7 +16,8 @@ module Mondrian::REST
       content_type :txt, "text/plain"
       post do
         status 200
-        rbody = env['api.request.body']
+
+        rbody = env['api.request.body'].force_encoding('utf-8')
         mdx(rbody)
       end
     end
