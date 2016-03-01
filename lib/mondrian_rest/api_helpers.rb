@@ -47,24 +47,24 @@ module Mondrian::REST
           }
         }
 
-        {
+        return {
           :name => cube.name,
           :annotations => cube.annotations,
           :dimensions => dimensions,
           :measures => cube.dimensions
-                       .find(&:measures?)
-                       .hierarchy
-                       .levels.first
-                       .members
-                       .find_all(&:visible?)
-                       .map do |m|
-                         {
-                           :name => m.name,
-                           :caption => m.caption,
-                           :annotations => m.annotations,
-                           :full_name => m.full_name
-                         }
-                       end
+                      .find(&:measures?)
+                      .hierarchy
+                      .levels.first
+                      .members
+                      .find_all(&:visible?)
+                      .map do |m|
+            {
+              :name => m.name,
+              :caption => m.caption,
+              :annotations => m.annotations,
+              :full_name => m.full_name
+            }
+          end
         }
       end
   end
