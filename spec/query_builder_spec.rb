@@ -2,6 +2,7 @@ require 'json'
 require 'spec_helper.rb'
 
 describe "Query Builder" do
+
   class QueryHelper
     include Mondrian::REST::QueryHelper
     attr_accessor :olap
@@ -11,17 +12,16 @@ describe "Query Builder" do
   end
 
   before(:all) do
-    fm_params = setup_foodmart
-    @agg = Mondrian::REST::Server.instance
-    @agg.params = fm_params
-    @agg.connect!
-
+    @fm_params = setup_foodmart
     @qh = QueryHelper.new
-    @qh.olap = @agg.olap
+    @olap = Mondrian::OLAP::Connection.new(@fm_params)
+    @olap.connect
+    @qh.olap = @olap
   end
 
+
   before(:each) do
-    @cube = @agg.olap.cube('Sales')
+    @cube = @olap.cube('Sales')
   end
 
   it "should get a member from an MDX member expression" do

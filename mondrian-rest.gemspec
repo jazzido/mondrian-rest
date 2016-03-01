@@ -17,7 +17,6 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'mondrian-olap', ["~> 0.7.0"]
   s.add_runtime_dependency 'grape', ["~> 0.14.0"]
   s.add_runtime_dependency 'writeexcel', '~> 1.0', '>= 1.0.5'
-  s.add_runtime_dependency "null_logger", ["~> 0.0.1"]
 
   s.add_development_dependency 'rake', '~> 10.4', '>= 10.4.2'
   s.add_development_dependency 'rspec', '~> 3.4', '>= 3.4.0'

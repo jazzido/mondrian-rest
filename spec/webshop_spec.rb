@@ -7,12 +7,13 @@ describe "Webshop" do
   include Rack::Test::Methods
 
   before(:all) do
-    ws_params = setup_webshop
-    @agg = Mondrian::REST::Server.instance
-    @agg.params = ws_params
-    @agg.connect!
-
+    @ws_params = setup_webshop
+    Mondrian::REST::APIHelpers.class_variable_set('@@olap', nil)
     @app = Mondrian::REST::Api.new
+  end
+
+  before(:each) do
+    env('mondrian-olap.params', @ws_params)
   end
 
   def app
