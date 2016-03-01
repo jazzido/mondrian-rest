@@ -26,7 +26,7 @@ module Mondrian::REST
     end
 
     def mdx(query)
-      Mondrian::REST.log.info("Executing MDX query #{query}")
+      logger.info("Executing MDX query #{query}")
       begin
         result = olap.execute query
         return result

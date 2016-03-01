@@ -10,6 +10,11 @@ module Mondrian::REST
 
     helpers Mondrian::REST::APIHelpers
     helpers Mondrian::REST::QueryHelper
+    helpers do
+      def logger
+        Api.logger
+      end
+    end
 
     resource :mdx do
       desc "Execute an MDX query against a cube"
