@@ -6,12 +6,13 @@ describe "Cube API" do
   include Rack::Test::Methods
 
   before(:all) do
-    fm_params = setup_foodmart
-    @agg = Mondrian::REST::Server.instance
-    @agg.params = fm_params
-    @agg.connect!
-
+    @fm_params = setup_foodmart
+    Mondrian::REST::APIHelpers.class_variable_set('@@olap', nil)
     @app = Mondrian::REST::Api.new
+  end
+
+  before(:each) do
+    env('mondrian-olap.params', @fm_params)
   end
 
   def app
