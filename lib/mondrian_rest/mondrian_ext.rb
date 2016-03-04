@@ -77,23 +77,24 @@ module Mondrian
         # return the contents of the filter axis
         # puts self.raw_cell_set.getFilterAxis.inspect
 
-        dimensions = [''] * self.axis_members.size
+        dimensions = [ nil ] * self.axis_members.size
+        parents_l = self.axis_members.size.times.map { |_| Hash.new }
         {
           axes: self.axis_members.each_with_index.map { |a, i|
             {
               members: a.map { |m|
-                dimensions[i] = m.dimension_info
+                dimensions[i] ||= m.dimension_info
                 mh = m.to_h
                 if parents
-                  mh.merge!({:parent => m.ancestors.first.to_h})
+                  parents_l[i][mh[:parent_name]] ||= m.ancestors.first.to_h
                 end
                 mh
-              },
+              }
             }
           },
           axis_dimensions: dimensions,
           values: self.values
-        }
+        }.merge(parents ? { axis_parents: parents_l } : {})
       end
     end
   end
