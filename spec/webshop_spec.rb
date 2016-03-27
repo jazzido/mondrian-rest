@@ -23,7 +23,7 @@ describe "Webshop" do
   it "should return a list of cubes" do
     get '/cubes'
     expected = ["Sales"]
-    expect(JSON.parse(last_response.body)['cubes']).to eq(expected)
+    expect(JSON.parse(last_response.body)['cubes'].map { |c| c['name'] }).to eq(expected)
   end
 
   it "should return the members of a dimension" do

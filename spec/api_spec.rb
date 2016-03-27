@@ -22,7 +22,7 @@ describe "Cube API" do
   it "should return a list of cubes" do
     get '/cubes'
     expected = ["Sales 2", "Warehouse", "Sales Ragged", "Store", "HR", "Warehouse and Sales", "Sales"].sort
-    expect(JSON.parse(last_response.body)['cubes'].sort).to eq(expected)
+    expect(JSON.parse(last_response.body)['cubes'].map { |c| c['name'] }.sort).to eq(expected)
   end
 
   it "should return the definition of a cube" do
@@ -119,4 +119,9 @@ describe "Cube API" do
     r = JSON.parse(last_response.body)
     expect(r.has_key?('axis_parents')).to be(false)
   end
+
+  it "should add the parents as columns to the CSV" do
+    get '/cubes/Sales/aggregate.csv?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&parents=true'
+  end
+
 end

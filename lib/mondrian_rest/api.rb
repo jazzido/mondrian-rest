@@ -31,7 +31,7 @@ module Mondrian::REST
       desc "Returns the cubes defined in this server's schema"
       get do
         {
-          'cubes' => olap.cube_names
+          'cubes' => olap.cube_names.map { |cn| olap.cube(cn).to_h }
         }
       end
 
@@ -43,7 +43,7 @@ module Mondrian::REST
 
         get do
           cube = get_cube_or_404(params[:cube_name])
-          cube_def(cube)
+          cube.to_h
         end
 
         resource :members do
