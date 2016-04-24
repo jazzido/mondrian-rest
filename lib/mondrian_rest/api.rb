@@ -1,3 +1,5 @@
+require 'uri'
+
 require_relative './api_helpers.rb'
 require_relative './query_helper.rb'
 require_relative './api_formatters.rb'
@@ -48,13 +50,19 @@ module Mondrian::REST
 
         resource :members do
             desc "return a member by its full name"
-            get ':member_full_name',
-                requirements: { member_full_name: /[a-z0-9\.,\-\s%\\[\\]\(\)]+/i } do
+            #get ':member_full_name',
+            params do
+              requires :full_name,
+                       type: String,
+                       regexp: /[a-z0-9\.,\-\s%\\[\\]\(\)]+/i
+            end
+            get do
+              member_full_name = URI.decode(params[:full_name])
 
               m = get_member(get_cube_or_404(params[:cube_name]),
-                             params[:member_full_name])
+                             member_full_name)
               if m.nil?
-                error!("Member `#{params[:member_full_name]}` not found in cube `#{params[:cube_name]}`", 404)
+                error!("Member `#{member_full_name}` not found in cube `#{params[:cube_name]}`", 404)
               end
               m.to_h.merge({
                              ancestors: m.ancestors.map(&:to_h),
