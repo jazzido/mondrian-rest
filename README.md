@@ -4,7 +4,7 @@ A REST endpoint for [Mondrian](http://community.pentaho.com/projects/mondrian/)
 
 ## Usage
 
-See [`mondrian-rest-demo`](https://github.com/jazzido/mondrian-rest-demo) for an example OLAP cube implemented with `mondrian-rest`.
+See [`mondrian-rest-demo`](https://github.com/jazzido/mondrian-rest-demo) and [`mondrian-rest-foodmart`](https://github.com/jazzido/mondrian-rest-foodmart) for example OLAP cubes implemented with `mondrian-rest`.
 
 ## Installation
 
