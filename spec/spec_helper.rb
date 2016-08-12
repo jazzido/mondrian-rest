@@ -7,6 +7,8 @@ require 'zip'
 
 require_relative '../lib/mondrian_rest.rb'
 
+require 'coveralls'
+Coveralls.wear!
 
 def _download(url)
   uri = URI.parse(url)
