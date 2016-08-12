@@ -6,7 +6,8 @@ module Mondrian::REST::Formatters
   module AggregationJSON
     def self.call(obj, env)
       add_parents = env['rack.request.query_hash']['parents'] == 'true'
-      obj.to_h(add_parents).to_json
+      debug = env['rack.request.query_hash']['debug'] == 'true'
+      obj.to_h(add_parents, debug).to_json
     end
   end
 

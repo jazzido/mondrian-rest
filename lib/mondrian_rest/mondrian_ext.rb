@@ -120,11 +120,13 @@ module Mondrian
 
     class Result
 
+      attr_accessor :mdx
+
       def to_json
         to_h.to_json
       end
 
-      def to_h(parents=false)
+      def to_h(parents=false, debug=false)
         # XXX TODO
         # return the contents of the filter axis
         # puts self.raw_cell_set.getFilterAxis.inspect
@@ -146,7 +148,7 @@ module Mondrian
           },
           axis_dimensions: dimensions,
           values: self.values
-        }.merge(parents ? { axis_parents: parents_l } : {})
+        }.merge(parents ? { axis_parents: parents_l } : {}).merge(debug ? { mdx: self.mdx } : {})
       end
     end
   end

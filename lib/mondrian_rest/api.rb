@@ -88,11 +88,17 @@ module Mondrian::REST
             optional :nonempty, type: Boolean, desc: "Only return non empty cells"
             optional :distinct, type: Boolean, desc: "Apply DISTINCT() to every axis"
             optional :parents, type: Boolean, desc: "Include members' parent"
+            optional :debug, type: Boolean, desc: "Include generated MDX", default: false
           end
           get do
             cube = get_cube_or_404(params[:cube_name])
             query = build_query(cube, params)
-            mdx(query.to_mdx)
+            mdx_query = query.to_mdx
+            result = mdx(query.to_mdx)
+            if params[:debug]
+              result.mdx = mdx_query
+            end
+            result
           end
         end
 

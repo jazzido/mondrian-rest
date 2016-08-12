@@ -120,6 +120,23 @@ describe "Cube API" do
     expect(r.has_key?('axis_parents')).to be(false)
   end
 
+  it "should include the generated MDX query in the response if debug=True" do
+    get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&debug=true'
+    r = JSON.parse(last_response.body)
+    expect(r.has_key?('mdx')).to be(true)
+    expect(r['mdx']).to eq("SELECT {[Measures].[Store Sales]} ON COLUMNS,\n[Time].[Month].Members ON ROWS,\n[Customers].[City].Members ON PAGES\nFROM [Sales]")
+  end
+
+  it "should not include the generated MDX in the response if debug not given or if debug=false" do
+    get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales'
+    r = JSON.parse(last_response.body)
+    expect(r.has_key?('mdx')).to be(false)
+
+    get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&debug=false'
+    r = JSON.parse(last_response.body)
+    expect(r.has_key?('mdx')).to be(false)
+  end
+
   it "should add the parents as columns to the CSV" do
     get '/cubes/Sales/aggregate.csv?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&parents=true'
   end
