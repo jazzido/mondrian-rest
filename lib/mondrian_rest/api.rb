@@ -7,7 +7,7 @@ require_relative './api_formatters.rb'
 module Mondrian::REST
 
   class Api < Grape::API
-    version '1', using: :header, vendor: 'openrafam'
+    version '1', using: :header, vendor: 'mondrian_rest'
     format :json
 
     helpers Mondrian::REST::APIHelpers
@@ -19,6 +19,13 @@ module Mondrian::REST
     end
 
     resource :mdx do
+      content_type :xls, "application/vnd.ms-excel"
+      formatter :xls, Mondrian::REST::Formatters::XLS
+      content_type :csv, "text/csv"
+      formatter :csv, Mondrian::REST::Formatters::CSV
+      content_type :json, "application/json"
+      formatter :json, Mondrian::REST::Formatters::AggregationJSON
+
       desc "Execute an MDX query against a cube"
       content_type :txt, "text/plain"
       post do
