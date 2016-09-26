@@ -6,6 +6,8 @@ A REST endpoint for [Mondrian](http://community.pentaho.com/projects/mondrian/)
 
 See [`mondrian-rest-demo`](https://github.com/jazzido/mondrian-rest-demo) and [`mondrian-rest-foodmart`](https://github.com/jazzido/mondrian-rest-foodmart) for example OLAP cubes implemented with `mondrian-rest`.
 
+[`mondrian-rest-ui`](https://github.com/jazzido/mondrian-rest-ui) is an experimental visualization tool for `mondrian-rest`, inspired by [CubesViewer](https://github.com/jjmontesl/cubesviewer) and [Polestar](https://github.com/vega/polestar).
+
 ## Installation
 
 TODO: Describe the installation process
