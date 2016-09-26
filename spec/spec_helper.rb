@@ -14,7 +14,7 @@ def _download(url)
   uri = URI.parse(url)
   Net::HTTP.start(uri.host, uri.port, :use_ssl => true) do |http|
     resp = http.get(uri.path)
-    file = Tempfile.new('foo', Dir.tmpdir, 'wb+')
+    file = Tempfile.new('foo')
     file.binmode
     file.write(resp.body)
     file.flush
