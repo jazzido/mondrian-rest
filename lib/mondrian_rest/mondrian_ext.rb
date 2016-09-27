@@ -90,7 +90,7 @@ module Mondrian
         @raw_member.getLevel
       end
 
-      def to_h
+      def to_h(properties=[])
         kv = [:name, :full_name, :caption, :all_member?,
               :drillable?, :depth].map { |m|
           [m, self.send(m)]
@@ -98,6 +98,14 @@ module Mondrian
         kv << [:key, self.property_value('MEMBER_KEY')]
         kv << [:num_children, self.property_value('CHILDREN_CARDINALITY')]
         kv << [:parent_name, self.property_value('PARENT_UNIQUE_NAME')]
+
+        if properties.size > 0
+          kv << [
+            :properties,
+            properties.reduce({}) { |h, p| h[p] = self.property_value(p); h }
+          ]
+        end
+
         Hash[kv]
       end
 
@@ -120,7 +128,7 @@ module Mondrian
 
     class Result
 
-      attr_accessor :mdx
+      attr_accessor :mdx, :properties
 
       def to_json
         to_h.to_json
@@ -131,14 +139,20 @@ module Mondrian
         # return the contents of the filter axis
         # puts self.raw_cell_set.getFilterAxis.inspect
 
-        dimensions = [ nil ] * self.axis_members.size
+        dimensions = self.axis_members.map { |am| am.first.dimension_info }
+
+        pprops = unless self.properties.nil?
+                   parse_properties(dimensions[1..-1]) # exclude Measures dimension
+                 else
+                   {}
+                 end
+
         parents_l = self.axis_members.size.times.map { |_| Hash.new }
         {
           axes: self.axis_members.each_with_index.map { |a, i|
             {
               members: a.map { |m|
-                dimensions[i] ||= m.dimension_info
-                mh = m.to_h
+                mh = m.to_h(pprops[m.raw_member.getDimension.name] || [])
                 if parents
                   parents_l[i][mh[:parent_name]] ||= m.ancestors.first.to_h
                 end
@@ -150,6 +164,27 @@ module Mondrian
           values: self.values
         }.merge(parents ? { axis_parents: parents_l } : {}).merge(debug ? { mdx: self.mdx } : {})
       end
+
+      private
+
+      def parse_properties(dimensions)
+        self.properties.reduce({}) { |h, p|
+          sl = org.olap4j.mdx.IdentifierNode.parseIdentifier(p).getSegmentList.to_a
+          if sl.size != 2
+            raise "Properties must be in the form `Dimension.Property Name`"
+          end
+
+          # check that the dimension is in the drilldown list
+          if dimensions.find { |ad| sl[0].name == ad[:name] }.nil?
+            raise "Dimension #{sl[0].name} not in drilldown list"
+          end
+
+          h[sl[0].name] ||= []
+          h[sl[0].name] << sl[1].name
+          h
+        }
+      end
+
     end
   end
 end
