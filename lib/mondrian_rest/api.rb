@@ -94,7 +94,7 @@ module Mondrian::REST
             optional :drilldown, type: Array, desc: "Dimension(s) to be drilled down"
             optional :nonempty, type: Boolean, desc: "Only return non empty cells"
             optional :distinct, type: Boolean, desc: "Apply DISTINCT() to every axis"
-            optional :parents, type: Boolean, desc: "Include members' parent"
+            optional :parents, type: Boolean, desc: "Include members' ancestors"
             optional :debug, type: Boolean, desc: "Include generated MDX", default: false
             optional :properties, type: Array, desc: "Include member properties"
           end

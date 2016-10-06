@@ -147,14 +147,17 @@ module Mondrian
                    {}
                  end
 
-        parents_l = self.axis_members.size.times.map { |_| Hash.new }
-        {
+        rv = {
           axes: self.axis_members.each_with_index.map { |a, i|
             {
               members: a.map { |m|
                 mh = m.to_h(pprops[m.raw_member.getDimension.name] || [])
                 if parents
-                  parents_l[i][mh[:parent_name]] ||= m.ancestors.first.to_h
+                  mh.merge!({
+                              ancestors: m.ancestors.map { |ma|
+                                ma.to_h(pprops[ma.raw_member.getDimension.name] || [])
+                              }
+                            })
                 end
                 mh
               }

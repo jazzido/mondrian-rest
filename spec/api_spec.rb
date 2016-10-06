@@ -103,14 +103,14 @@ describe "Cube API" do
     expect(400).to eq(last_response.status)
   end
 
-  it "should return the members' parent if specified in the query string" do
+  it "should return the members' ancestors if 'parents=true' in query string" do
     get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&parents=true'
     r = JSON.parse(last_response.body)
 
-    expect(r.has_key?('axis_parents')).to be(true)
-
-    r['axes'][2]['members'].each { |m|
-      expect(m['parent_name']).to eq(r['axis_parents'][2][m['parent_name']]['full_name'])
+    r['axes'][1..-1].each { |a|
+      a['members'].each { |m|
+        expect(m['ancestors']).to be_kind_of(Array)
+      }
     }
   end
 
