@@ -5,7 +5,7 @@ describe "Query Builder" do
 
   class QueryHelper
     include Mondrian::REST::QueryHelper
-    attr_accessor :olap
+    attr_accessor :olap, :mdx_parser
     def error!(*args)
       raise
     end
@@ -17,6 +17,8 @@ describe "Query Builder" do
     @olap = Mondrian::OLAP::Connection.new(@fm_params)
     @olap.connect
     @qh.olap = @olap
+    @qh.mdx_parser = @olap.raw_connection.getParserFactory
+                     .createMdxParser(@olap.raw_connection)
   end
 
 
@@ -74,7 +76,7 @@ describe "Query Builder" do
                           'drilldown' => ['Product.Product Category'],
                           'cut' => ['Time.Year.1997']
                         })
-    expect(q.to_mdx).to eq("SELECT {[Measures].[Unit Sales]} ON COLUMNS,\n[Product].[Product Category].Members ON ROWS\nFROM [Sales]\nWHERE ([Time].[1997])")
+    expect(q.to_mdx).to eq("SELECT {[Measures].[Unit Sales]} ON COLUMNS,\n[Product].[Product Category].Members ON ROWS\nFROM [Sales]\nWHERE (Time.Year.1997)")
   end
 
   it "should aggregate on the next level of the dimension in the cut" do
@@ -83,7 +85,35 @@ describe "Query Builder" do
                           'cut' => ['Product.Product Family.Drink'],
                           'drilldown' => ['Product']
                         })
-    expect(q.to_mdx).to eq("SELECT {[Measures].[Unit Sales]} ON COLUMNS,\nDescendants([Product].[Drink], 1) ON ROWS\nFROM [Sales]")
+    expect(q.to_mdx).to eq("SELECT {[Measures].[Unit Sales]} ON COLUMNS,\n{Product.Product Family.Drink} ON ROWS\nFROM [Sales]")
   end
 
+  describe "parse_cut" do
+    it "should correctly parse a cut specified as a set" do
+      l = @cube.dimension('Product').hierarchies[0].level('Product Family')
+      pc = @qh.parse_cut(@cube, '{ [Product].[Product Family].[Drink] }')
+
+      expect(pc[:cut]).to eq('{[Product].[Product Family].[Drink]}')
+      expect(pc[:level]).to eq(l.raw_level)
+    end
+
+    it "should raise if levels in the cut set are not unique" do
+      expect(@qh).to receive(:"error!").with(kind_of(String), 400)
+      @qh.parse_cut(@cube, '{ [Product].[Product Family].[Drink], [Product].[Product Category].[Dairy] }')
+    end
+
+    it "should correctly parse a cut specified as a range" do
+      l = @cube.dimension('Time').hierarchies[0].level('Year')
+      pc = @qh.parse_cut(@cube, '([Time].[Year].[1997]:[Time].[Year].[1998])')
+      expect(pc[:cut]).to eq('([Time].[Year].[1997] : [Time].[Year].[1998])')
+      expect(pc[:level]).to eq(l.raw_level)
+    end
+
+    it "should correctly parse a cut specified as a member" do
+      l = @cube.dimension('Time').hierarchies[0].level('Year')
+      pc = @qh.parse_cut(@cube, '[Time].[Year].[1997]')
+      expect(pc[:cut]).to eq('[Time].[Year].[1997]')
+      expect(pc[:level]).to eq(l.raw_level)
+    end
+  end
 end

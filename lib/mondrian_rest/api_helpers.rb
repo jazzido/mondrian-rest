@@ -2,6 +2,7 @@ module Mondrian::REST
   module APIHelpers
 
     @@olap = nil
+    @@mdx_parser = nil
 
     def olap
       if @@olap.nil?
@@ -9,6 +10,16 @@ module Mondrian::REST
         @@olap.connect
       end
       @@olap
+    end
+
+    ##
+    # Returns an instance of org.olap4j.mdx.parser.MdxParser
+    def mdx_parser
+      if @@mdx_parser.nil?
+        @@mdx_parser = olap.raw_connection.getParserFactory
+                       .createMdxParser(olap.raw_connection)
+      end
+      @@mdx_parser
     end
 
     def olap_flush

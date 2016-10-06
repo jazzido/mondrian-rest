@@ -1,6 +1,13 @@
 module Mondrian::REST
   module QueryHelper
 
+    def unparse_node(node)
+      sw = java.io.StringWriter.new
+      ptw = org.olap4j.mdx.ParseTreeWriter.new(sw)
+      node.unparse(ptw)
+      sw.toString
+    end
+
     def get_dimension(cube, dname)
       cube_dimensions = cube.dimensions
                         .find_all { |d| d.dimension_type != :measures }
@@ -21,6 +28,51 @@ module Mondrian::REST
         member = Mondrian::OLAP::Member.new(rm)
       end
       member
+    end
+
+    def parse_cut(cube, cut_expr)
+      p = mdx_parser.parseExpression(cut_expr)
+
+      case p
+      when org.olap4j.mdx.CallNode
+        case p.getOperatorName
+        when "{}"
+          # check that the set contains only Members of a single dimension level
+          ls = p.getArgList.map { |id_node|
+            get_member(cube, unparse_node(id_node)).raw_level
+          }.uniq
+          unless ls.size == 1
+            error!("Illegal cut: " + cut_expr, 400)
+          end
+          { level: ls.first, cut: unparse_node(p), type: :set }
+        when "()"
+          # check that the range contains a valid range
+
+          unless p.getArgList.first.is_a?(org.olap4j.mdx.CallNode) \
+            and p.getArgList.first.getOperatorName == ':'
+            error!("Illegal cut: " + cut_expr, 400)
+          end
+
+          ls = p.getArgList.first.getArgList.map { |id_node|
+            get_member(cube, unparse_node(id_node)).raw_level
+          }.uniq
+
+          unless ls.size == 1
+            error!("Illegal cut: " + cut_expr, 400)
+          end
+
+          { level: ls.first, cut: unparse_node(p), type: :range }
+        else
+          error!("Illegal cut: " + cut_expr, 400)
+        end
+      when org.olap4j.mdx.IdentifierNode
+        # if `cut_expr` looks like a member, check that it's level is
+        # equal to `level`
+        m = get_member(cube, cut_expr)
+        { level: m.raw_level, cut: cut_expr, type: :member }
+      else
+        error!("Illegal cut: " + cut_expr, 400)
+      end
     end
 
     ##
@@ -88,29 +140,26 @@ module Mondrian::REST
       axis_idx = 1
 
       query_axes = options['drilldown'].map { |dd| parse_drilldown(cube, dd) }
-      slicer_axis = options['cut'].map { |cut| get_member(cube, cut) }
+
+      slicer_axis = options['cut'].reduce({}) { |h, cut_expr|
+        pc = parse_cut(cube, cut_expr)
+        h[pc[:level]] = pc
+        h
+      }
 
       dd = query_axes.map do |qa|
-        sa_idx = slicer_axis.index { |sa| sa.raw_level.hierarchy == qa.raw_level.hierarchy }
-        m = nil
-        if sa_idx.nil? # no slice (cut) on this axis
-          m = qa.raw_level.unique_name + '.Members'
-        else
-          sa = slicer_axis[sa_idx]
-          slicer_axis.delete_at(sa_idx)
-
-          if sa.raw_level.depth > qa.depth
-            error!("#{sa.raw_level.unique_name} is above #{qa.raw_level.unique_name}, can't drilldown", 400)
-          end
-
-          if sa.drillable?
-            dist = qa.depth - sa.raw_level.depth
-            m = "Descendants(#{sa.full_name}, #{dist == 0 ? 1 : dist})"
+        # there's a slice (cut) on this axis
+        if slicer_axis[qa.raw_level]
+          cut = slicer_axis.delete(qa.raw_level)
+          case cut[:type]
+          when :member
+            "{#{cut[:cut]}}"
           else
-            m = "{#{sa.full_name}}"
+            cut[:cut]
           end
+        else
+          qa.raw_level.unique_name + '.Members'
         end
-        m
       end
 
       # query axes (drilldown)
@@ -131,7 +180,7 @@ module Mondrian::REST
 
       # slicer axes (cut)
       if slicer_axis.size >= 1
-        query = query.where(slicer_axis.map(&:full_name))
+        query = query.where(slicer_axis.values.map { |v| v[:cut] })
       end
       query
     end

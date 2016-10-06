@@ -8,6 +8,7 @@ describe "Cube API" do
   before(:all) do
     @fm_params = setup_foodmart
     Mondrian::REST::APIHelpers.class_variable_set('@@olap', nil)
+    Mondrian::REST::APIHelpers.class_variable_set('@@mdx_parser', nil)
     @app = Mondrian::REST::Api.new
   end
 
@@ -50,7 +51,7 @@ describe "Cube API" do
 
   it "should return a member by full name" do
     get '/cubes/Sales%202/members?full_name=%5BProduct%5D.%5BDrink%5D'
-    expected = {"name"=>"Drink", "full_name"=>"[Product].[Drink]", "caption"=>"Drink", "all_member?"=>false, "drillable?"=>true, "depth"=>1, "key"=>"Drink", "num_children"=>3, "parent_name"=>"[Product].[All Products]", "ancestors"=>[{"name"=>"All Products", "full_name"=>"[Product].[All Products]", "caption"=>"All Products", "all_member?"=>true, "drillable?"=>true, "depth"=>0, "key"=>0, "num_children"=>3, "parent_name"=>nil}], "dimension"=>{"name"=>"Product", "caption"=>"Product", "type"=>"standard", "level"=>"Product Family"}}
+    expected = {"name"=>"Drink", "full_name"=>"[Product].[Drink]", "caption"=>"Drink", "all_member?"=>false, "drillable?"=>true, "depth"=>1, "key"=>"Drink", "num_children"=>3, "parent_name"=>"[Product].[All Products]", "ancestors"=>[{"name"=>"All Products", "full_name"=>"[Product].[All Products]", "caption"=>"All Products", "all_member?"=>true, "drillable?"=>true, "depth"=>0, "key"=>0, "num_children"=>3, "parent_name"=>nil}], "dimension"=>{"name"=>"Product", "caption"=>"Product", "type"=>"standard", "level"=>"Product Family", "level_depth"=>1}}
     expect(JSON.parse(last_response.body)).to eq(expected)
   end
 
@@ -93,13 +94,14 @@ describe "Cube API" do
   end
 
   it "should cut and drilldown skipping levels correctly" do
-    get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&cut[]=Customers.Country.USA'
+    pending "What do we do about this case? (same hierarchy in >1 independent axes)"
+    get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&cut[]=[Customers].[Country].[USA]'
     exp = ["Altadena", "Arcadia", "Bellflower", "Berkeley", "Beverly Hills", "Burbank", "Burlingame", "Chula Vista", "Colma", "Concord", "Coronado", "Daly City", "Downey", "El Cajon", "Fremont", "Glendale", "Grossmont", "Imperial Beach", "La Jolla", "La Mesa", "Lakewood", "Lemon Grove", "Lincoln Acres", "Long Beach", "Los Angeles", "Mill Valley", "National City", "Newport Beach", "Novato", "Oakland", "Palo Alto", "Pomona", "Redwood City", "Richmond", "San Carlos", "San Diego", "San Francisco", "San Gabriel", "San Jose", "Santa Cruz", "Santa Monica", "Spring Valley", "Torrance", "West Covina", "Woodland Hills", "Albany", "Beaverton", "Corvallis", "Lake Oswego", "Lebanon", "Milwaukie", "Oregon City", "Portland", "Salem", "W. Linn", "Woodburn", "Anacortes", "Ballard", "Bellingham", "Bremerton", "Burien", "Edmonds", "Everett", "Issaquah", "Kirkland", "Lynnwood", "Marysville", "Olympia", "Port Orchard", "Puyallup", "Redmond", "Renton", "Seattle", "Sedro Woolley", "Spokane", "Tacoma", "Walla Walla", "Yakima"]
     expect(exp).to eq(JSON.parse(last_response.body)['axes'][2]['members'].map { |m| m['caption'] })
   end
 
   it "should not allow drilling down on an ascendant" do
-    get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.Country&measures[]=Store%20Sales&cut[]=Customers.USA.OR.Lake%20Oswego'
+    get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.Country&measures[]=Store%20Sales&cut[]=[Customers].[USA].[OR].[Lake%20Oswego]'
     expect(400).to eq(last_response.status)
   end
 
@@ -146,6 +148,11 @@ describe "Cube API" do
     r = JSON.parse(last_response.body)
     expect(r['axes'][-1]['members'].map { |m| m['properties'] }).to all(include('Has coffee bar'))
     expect(r['axes'][-1]['members'].map { |m| m['properties'] }).to all(include('Grocery Sqft'))
+  end
+
+  it "should fail if requested member properties of a dimension not in drilldown[]" do
+    get '/cubes/HR/aggregate?drilldown[]=Time.Year&&measures[]=Org%20Salary&properties[]=Store.Has%20coffee%20bar&properties[]=Store.Grocery%20Sqft'
+    expect(400).to eq(last_response.status)
   end
 
 end

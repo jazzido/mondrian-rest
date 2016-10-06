@@ -111,11 +111,13 @@ module Mondrian
 
       def dimension_info
         d = @raw_member.getDimension
+        l = @raw_member.getLevel
         {
           name: d.getName,
           caption: d.getCaption,
           type: self.dimension_type,
-          level: @raw_member.getLevel.getCaption
+          level: l.getCaption,
+          level_depth: l.depth
         }
       end
 
@@ -165,11 +167,18 @@ module Mondrian
           },
           axis_dimensions: dimensions,
           values: self.values
-        }.merge(parents ? { axis_parents: parents_l } : {}).merge(debug ? { mdx: self.mdx } : {})
+        }
+
+        rv[:mdx] = self.mdx if debug
+
+        rv
+
       end
 
       private
 
+      ##
+      #
       def parse_properties(dimensions)
         self.properties.reduce({}) { |h, p|
           sl = org.olap4j.mdx.IdentifierNode.parseIdentifier(p).getSegmentList.to_a
@@ -179,7 +188,7 @@ module Mondrian
 
           # check that the dimension is in the drilldown list
           if dimensions.find { |ad| sl[0].name == ad[:name] }.nil?
-            raise "Dimension #{sl[0].name} not in drilldown list"
+            raise "Dimension `#{sl[0].name}` not in drilldown list"
           end
 
           h[sl[0].name] ||= []
