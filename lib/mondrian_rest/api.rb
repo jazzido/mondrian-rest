@@ -105,6 +105,7 @@ module Mondrian::REST
             result = mdx(query.to_mdx)
             result.mdx = mdx_query if params[:debug]
             result.properties = params[:properties]
+            result.cube = cube
 
             result
           end
