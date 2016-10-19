@@ -73,13 +73,13 @@ module Mondrian
         @full_name ||= @raw_level.getUniqueName
       end
 
-      def to_h
+      def to_h(member_properties=[])
         {
           name: self.name,
           caption: self.caption,
           members: self.members
             .uniq { |m| m.property_value('MEMBER_KEY') }
-            .map(&:to_h)
+            .map { |m| m.to_h(member_properties) }
         }
       end
     end

@@ -57,7 +57,6 @@ module Mondrian::REST
 
         resource :members do
             desc "return a member by its full name"
-            #get ':member_full_name',
             params do
               requires :full_name,
                        type: String,
@@ -129,11 +128,24 @@ module Mondrian::REST
               route_param :level_name do
                 resource :members do
 
+                  params do
+                    optional :member_properties, type: Array
+                  end
+
                   get do
                     cube = get_cube_or_404(params[:cube_name])
+
                     dimension = cube.dimension(params[:dimension_name])
+                    if dimension.nil?
+                      error!("dimension #{params[:dimension_name]} not found in cube #{params[:cube_name]}", 404)
+                    end
+
                     level = dimension.hierarchies[0].level(params[:level_name])
-                    level.to_h
+                    if level.nil?
+                      error!("level #{params[:level_name]} not found in dimension #{params[:dimension_name]}")
+                    end
+
+                    level.to_h(params[:member_properties])
                   end
 
                   route_param :member_key,

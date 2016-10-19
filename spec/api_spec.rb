@@ -42,6 +42,12 @@ describe "Cube API" do
     expect(dim['hierarchies'].first['levels'][1]['members'].map { |l| l['name'] }).to eq(['Drink', 'Food', 'Non-Consumable'])
   end
 
+  it "should return the members of a dimension level along with the requested properties" do
+    get '/cubes/Sales/dimensions/Store/levels/Store%20Name/members?member_properties[]=Street%20address&member_properties[]=Has%20coffee%20bar'
+    res = JSON.parse(last_response.body)
+    expect(res['members'].map { |m| m['properties' ]}).to all(have_key('Street address').and have_key('Has coffee bar'))
+  end
+
   it "should return a member" do
     get '/cubes/Sales%202/dimensions/Product/levels/Product%20Family/members/Drink'
     m = JSON.parse(last_response.body)
