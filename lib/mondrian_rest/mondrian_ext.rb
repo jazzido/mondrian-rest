@@ -130,7 +130,7 @@ module Mondrian
 
     class Result
 
-      attr_accessor :mdx, :properties
+      attr_accessor :cube, :mdx, :properties
 
       def to_json
         to_h.to_json
@@ -196,7 +196,6 @@ module Mondrian
           h
         }
       end
-
     end
   end
 end

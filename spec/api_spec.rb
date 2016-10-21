@@ -145,9 +145,17 @@ describe "Cube API" do
     expect(r.has_key?('mdx')).to be(false)
   end
 
-  #it "should add the parents as columns to the CSV" do
-  #  get '/cubes/Sales/aggregate.csv?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&parents=true'
-  #end
+  it "should add the parents as columns to the CSV, if requested" do
+    get '/cubes/Sales/aggregate.csv?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&parents=true&nonempty=true'
+    csv = CSV.parse(last_response.body)
+    expect(csv.first).to eq(["ID Year", "Year", "ID Quarter", "Quarter", "ID Month", "Month", "ID Country", "Country", "ID State Province", "State Province", "ID City", "City", "Store Sales"])
+  end
+
+  it "should not add the parents as columns to the CSV by default" do
+    get '/cubes/Sales/aggregate.csv?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&nonempty=true'
+    csv = CSV.parse(last_response.body)
+    expect(csv.first).to eq(["ID Month", "Month", "ID City", "City", "Store Sales"])
+  end
 
   it "should include member properties if requested" do
     get '/cubes/HR/aggregate?drilldown[]=Time.Year&drilldown[]=Store.Store%20Name&measures[]=Org%20Salary&properties[]=Store.Has%20coffee%20bar&properties[]=Store.Grocery%20Sqft'

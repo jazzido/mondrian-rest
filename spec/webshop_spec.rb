@@ -44,7 +44,7 @@ describe "Webshop" do
   end
 
   it "should drilldown by country, month, and product category and return CSV" do
-    get '/cubes/Sales/aggregate.csv?drilldown[]=Country&drilldown[]=Date.Month&drilldown[]=Product.Category&measures[]=Price%20Total&measures[]=Quantity'
+    get '/cubes/Sales/aggregate.csv?drilldown[]=Country.Continent&drilldown[]=Date.Month&drilldown[]=Product.Category&measures[]=Price%20Total&measures[]=Quantity'
     expect(CSV.parse(last_response.body)).to eq(CSV.read(File.join(File.dirname(__FILE__), 'fixtures', 'webshop_1.csv')))
   end
 
