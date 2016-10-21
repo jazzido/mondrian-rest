@@ -45,8 +45,6 @@ module Mondrian::REST::Formatters
                                              add_parents: add_parents,
                                              debug: debug)
 
-      puts result.inspect
-
       ::CSV.generate do |csv|
         rows.each { |row| csv << row }
       end
@@ -55,72 +53,74 @@ module Mondrian::REST::Formatters
 
   ##
   # Generate 'tidy data' (http://vita.had.co.nz/papers/tidy-data.pdf)
-  # from a result set
+  # from a result set.
   def self.tidy(result, options)
-    rs = result.to_h(options[:add_parents], options[:debug])
+    cube = result.cube
 
+    add_parents = options[:add_parents]
+    rs = result.to_h(add_parents, options[:debug])
     measures = rs[:axes].first[:members]
     dimensions = rs[:axis_dimensions][1..-1]
+    columns = []
+    slices = []
+    level_has_all = []
 
     Enumerator.new do |y|
-      dc = pluck(dimensions, :caption)
+      dimensions.each do |dd|
+        if add_parents
+          hier = cube.dimension(dd[:name])
+                   .hierarchies
+                   .first
 
-      column_names(result, options[:add_parents])
+          level_has_all << hier.has_all?
+          slices << dd[:level_depth]
 
-      y.yield dc.map { |d| "ID " + d }.zip(dc).flatten + pluck(measures, :name)
+          hier
+            .levels[(hier.has_all? ? 1 : 0)...dd[:level_depth]]
+            .each do |ancestor_level|
+
+            columns += ["ID #{ancestor_level.caption}", ancestor_level.caption]
+          end
+        end
+
+        columns += ["ID #{dd[:level]}", dd[:level]]
+      end
+
+      # append measure columns and yield table header
+      y.yield columns + pluck(measures, :name)
 
       prod = rs[:axes][1..-1].map { |e|
         e[:members].map.with_index { |e_, i| [e_,i] }
       }
       values = rs[:values]
 
-      prod.shift.product(*prod).each { |cell|
+      prod.shift.product(*prod).each do |cell|
         cidxs = cell.map { |c,i| i }.reverse
 
         cm = cell.map(&:first)
-        y.yield pluck(cm, :key)
-                  .zip(pluck(cm, :caption))
-                  .flatten \
-                + measures.map.with_index { |m, mi|
+
+        msrs = measures.map.with_index { |m, mi|
           (cidxs + [mi]).reduce(values) { |_, idx| _[idx] }
         }
-      }
+        if add_parents
+          vdim = cm.each.with_index.reduce([]) { |cnames, (member, j)|
+            member[:ancestors][0...slices[j] - (level_has_all[j] ? 1 : 0)].each { |ancestor|
+              cnames += [ancestor[:key], ancestor[:caption]]
+            }
+            cnames += [member[:key], member[:caption]]
+          }
+          y.yield vdim + msrs
+        else
+          y.yield pluck(cm, :key)
+                    .zip(pluck(cm, :caption))
+                    .flatten \
+                  + msrs
+        end
+      end
     end
   end
 
   def self.pluck(a, m)
     a.map { |e| e[m] }
   end
-
-  private
-
-  def self.column_names(result, parents=false)
-    rs = result.to_h(parents, false)
-    cube = result.cube
-    columns = []
-
-    if parents
-      slices = []
-      axes = rs[:axis_dimensions][1..-1]
-      axes.each do |dd|
-        slices << dd[:level_depth]
-
-        hier = cube.dimension(dd[:name])
-          .hierarchies
-          .first
-
-        hier
-          .levels[(hier.has_all? ? 1 : 0)...dd[:level_depth]]
-          .each do |ancestor_level|
-
-          columns += ["ID #{ancestor_level.caption}", ancestor_level.caption]
-        end
-
-        columns += ["ID #{dd[:level]}", dd[:level]]
-      end
-    else
-
-    end
-  end
-
 end

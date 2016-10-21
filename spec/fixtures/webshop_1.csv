@@ -1,4 +1,4 @@
-ID Country,Country,ID Date,Date,ID Product,Product,Price Total,Quantity
+ID Continent,Continent,ID Month,Month,ID Category,Category,Price Total,Quantity
 Africa,Africa,1,1,Books,Books,,
 Africa,Africa,1,1,Sports,Sports,,
 Africa,Africa,1,1,Various,Various,,
