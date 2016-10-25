@@ -10,7 +10,7 @@ See [`mondrian-rest-demo`](https://github.com/jazzido/mondrian-rest-demo) and [`
 
 ## Credits
 
-Initial inspiration for this project came from the [Stefan Urbanek](https://github.com/Stiivi)'s [`cubes`](http://cubes.databrewery.org/) OLAP server.
+Initial inspiration for this project came from the [Stefan Urbanek](https://github.com/Stiivi)'s [`cubes`](http://cubes.databrewery.org/) OLAP server. `mondrian-rest` uses [Raimonds Simanovskis](https://github.com/rsim)'s fantastic [`mondrian-olap`](https://github.com/rsim/mondrian-olap) library.
 
 
 ## License
