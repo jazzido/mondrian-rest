@@ -8,25 +8,10 @@ See [`mondrian-rest-demo`](https://github.com/jazzido/mondrian-rest-demo) and [`
 
 [`mondrian-rest-ui`](https://github.com/jazzido/mondrian-rest-ui) is an experimental visualization tool for `mondrian-rest`, inspired by [CubesViewer](https://github.com/jjmontesl/cubesviewer) and [Polestar](https://github.com/vega/polestar).
 
-## Installation
-
-TODO: Describe the installation process
-
-## Contributing
-
-1. Fork it!
-2. Create your feature branch: `git checkout -b my-new-feature`
-3. Commit your changes: `git commit -am 'Add some feature'`
-4. Push to the branch: `git push origin my-new-feature`
-5. Submit a pull request :D
-
-## History
-
-TODO: Write history
-
 ## Credits
 
-TODO: Write credits
+Initial inspiration for this project came from the [Stefan Urbanek](https://github.com/Stiivi)'s [`cubes`](http://cubes.databrewery.org/) OLAP server.
+
 
 ## License
 
