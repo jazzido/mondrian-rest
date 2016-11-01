@@ -14,7 +14,7 @@ Gem::Specification.new do |s|
   s.files         = `git ls-files`.split("\n").reject { |f| f =~ /^spec\// }
   s.require_paths = ["lib"]
 
-  s.add_runtime_dependency 'mondrian-olap', ["~> 0.7.0"]
+  s.add_runtime_dependency 'mondrian-olap', ["~> 0.8.0"]
   s.add_runtime_dependency 'grape', ["~> 0.14.0"]
   s.add_runtime_dependency 'writeexcel', '~> 1.0', '>= 1.0.5'
 
