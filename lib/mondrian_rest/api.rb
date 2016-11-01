@@ -130,7 +130,7 @@ module Mondrian::REST
                 resource :members do
 
                   params do
-                    optional :member_properties, type: Array
+                    optional :member_properties, type: Array, default: []
                   end
 
                   get do
