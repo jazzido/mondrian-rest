@@ -8,7 +8,7 @@ module Mondrian::REST
 
   class Api < Grape::API
     version '1', using: :header, vendor: 'mondrian_rest'
-    format :json
+    default_format :json
 
     helpers Mondrian::REST::APIHelpers
     helpers Mondrian::REST::QueryHelper
