@@ -53,4 +53,14 @@ describe "Webshop" do
     # XXX TODO assert contents of XLS
     expect(last_response.headers['Content-Type']).to eq('application/vnd.ms-excel')
   end
+
+  it "should drilldown by country, month, and product category and return JSONRecords" do
+    header 'Accept', 'application/x-jsonrecords'
+    get '/cubes/Sales/aggregate?drilldown[]=Country&drilldown[]=Date.Month&drilldown[]=Product.Category&measures[]=Price%20Total&measures[]=Quantity'
+
+    keys = ["ID Continent", "Continent", "ID Month", "Month", "ID Category", "Category", "Price Total", "Quantity"]
+
+    expect(JSON.parse(last_response.body)['data'].map(&:keys)).to all(eq(keys))
+  end
+
 end
