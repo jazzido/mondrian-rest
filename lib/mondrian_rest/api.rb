@@ -37,6 +37,8 @@ module Mondrian::REST
     end
 
     resource :cubes do
+      content_type :json, "application/json"
+      default_format :json
       desc "Returns the cubes defined in this server's schema"
       get do
         {
