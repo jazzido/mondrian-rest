@@ -16,6 +16,7 @@ module Mondrian::REST::Formatters
     def self.call(result, env)
       add_parents = env['rack.request.query_hash']['parents'] == 'true'
       debug = env['rack.request.query_hash']['debug'] == 'true'
+      properties = env['rack.request.query_hash']['properties'] || []
 
       out = StringIO.new
       book = WriteExcel.new(out)
@@ -24,7 +25,8 @@ module Mondrian::REST::Formatters
       Mondrian::REST::Formatters
         .tidy(result,
               add_parents: add_parents,
-              debug: debug)
+              debug: debug,
+              properties: properties)
         .each_with_index do |row, i|
           row.each_with_index { |cell, j|
             sheet.write(i, j, cell)
@@ -40,10 +42,12 @@ module Mondrian::REST::Formatters
     def self.call(result, env)
       add_parents = env['rack.request.query_hash']['parents'] == 'true'
       debug = env['rack.request.query_hash']['debug'] == 'true'
+      properties = env['rack.request.query_hash']['properties'] || []
 
       rows = Mondrian::REST::Formatters.tidy(result,
                                              add_parents: add_parents,
-                                             debug: debug)
+                                             debug: debug,
+                                             properties: properties)
 
       ::CSV.generate do |csv|
         rows.each { |row| csv << row }
@@ -55,10 +59,12 @@ module Mondrian::REST::Formatters
     def self.call(result, env)
       add_parents = env['rack.request.query_hash']['parents'] == 'true'
       debug = env['rack.request.query_hash']['debug'] == 'true'
+      properties = env['rack.request.query_hash']['properties'] || []
 
       rows = Mondrian::REST::Formatters.tidy(result,
                                              add_parents: add_parents,
-                                             debug: debug).lazy
+                                             debug: debug,
+                                             properties: properties).lazy
       keys = rows.next
 
       {
@@ -78,6 +84,7 @@ module Mondrian::REST::Formatters
     cube = result.cube
 
     add_parents = options[:add_parents]
+    properties = options[:properties]
     rs = result.to_h(add_parents, options[:debug])
     measures = rs[:axes].first[:members]
     dimensions = rs[:axis_dimensions][1..-1]
@@ -106,8 +113,12 @@ module Mondrian::REST::Formatters
         columns += ["ID #{dd[:level]}", dd[:level]]
       end
 
-      # append measure columns and yield table header
-      y.yield columns + pluck(measures, :name)
+      pnames = properties.map { |p|
+        org.olap4j.mdx.IdentifierNode.parseIdentifier(p).getSegmentList.last.name
+      }
+
+      # append properties and measure columns and yield table header
+      y.yield columns + pnames + pluck(measures, :name)
 
       prod = rs[:axes][1..-1].map { |e|
         e[:members].map.with_index { |e_, i| [e_,i] }
@@ -129,15 +140,25 @@ module Mondrian::REST::Formatters
             }
             cnames += [member[:key], member[:caption]]
           }
-          y.yield vdim + msrs
+          y.yield vdim + get_props(cm, pnames) + msrs
         else
-          y.yield pluck(cm, :key)
-                    .zip(pluck(cm, :caption))
-                    .flatten \
-                  + msrs
+
+          row = pluck(cm, :key)
+                  .zip(pluck(cm, :caption))
+                  .flatten
+
+          y.yield row + get_props(cm, pnames) + msrs
         end
       end
     end
+  end
+
+  def self.get_props(cm, pnames)
+    pvalues = pluck(cm, :properties).reduce({}) { |h, p|
+      h.merge(p || {})
+    }
+
+    pnames.map { |pn| pvalues[pn] }
   end
 
   def self.pluck(a, m)

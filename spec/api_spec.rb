@@ -164,6 +164,18 @@ describe "Cube API" do
     expect(r['axes'][-1]['members'].map { |m| m['properties'] }).to all(include('Grocery Sqft'))
   end
 
+  it "should include member properties in CSV if requested" do
+    get '/cubes/HR/aggregate.csv?drilldown[]=Time.Year&drilldown[]=Store.Store%20Name&measures[]=Org%20Salary&properties[]=Store.Has%20coffee%20bar&properties[]=Store.Grocery%20Sqft'
+    csv = CSV.parse(last_response.body)
+    expect(csv.first).to eq(["ID Year", "Year", "ID Store Name", "Store Name", "Has coffee bar", "Grocery Sqft", "Org Salary"])
+  end
+
+  it "should include member properties in CSV when parents are requested" do
+    get '/cubes/HR/aggregate.csv?drilldown[]=Time.Year&drilldown[]=Store.Store%20Name&measures[]=Org%20Salary&properties[]=Store.Has%20coffee%20bar&properties[]=Store.Grocery%20Sqft&parents=true'
+    csv = CSV.parse(last_response.body)
+    expect(csv.first).to eq(["ID Year", "Year", "ID Store Country", "Store Country", "ID Store State", "Store State", "ID Store City", "Store City", "ID Store Name", "Store Name", "Has coffee bar", "Grocery Sqft", "Org Salary"])
+  end
+
   it "should fail if requested member properties of a dimension not in drilldown[]" do
     get '/cubes/HR/aggregate?drilldown[]=Time.Year&&measures[]=Org%20Salary&properties[]=Store.Has%20coffee%20bar&properties[]=Store.Grocery%20Sqft'
     expect(400).to eq(last_response.status)
