@@ -21,7 +21,8 @@ module Mondrian
                   {
                     :name => l.name,
                     :full_name => l.full_name,
-                    :caption => l.caption
+                    :caption => l.caption,
+                    :annotations => l.annotations
                   }
                 }
               }
