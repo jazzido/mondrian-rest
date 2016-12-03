@@ -135,7 +135,7 @@ module Mondrian::REST::Formatters
         }
         if add_parents
           vdim = cm.each.with_index.reduce([]) { |cnames, (member, j)|
-            member[:ancestors][0...slices[j] - (level_has_all[j] ? 1 : 0)].each { |ancestor|
+            member[:ancestors][0...slices[j] - (level_has_all[j] ? 1 : 0)].reverse.each { |ancestor|
               cnames += [ancestor[:key], ancestor[:caption]]
             }
             cnames += [member[:key], member[:caption]]
