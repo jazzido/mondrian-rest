@@ -36,6 +36,26 @@ module Mondrian::REST
       end
     end
 
+    resource :flush do
+        params do
+          requires :secret, type: String, desc: "Secret key"
+        end
+        content_type :json, "application/json"
+        desc "Flush the schema cache"
+
+        get do
+          if ENV['MONDRIAN_REST_SECRET'].nil?
+            error!("Please set MONDRIAN_REST_SECRET to use this endpoint", 403)
+          end
+          if params[:secret] != ENV['MONDRIAN_REST_SECRET']
+            error!("Invalid secret key.", 403)
+          end
+          {
+            'status' => olap_flush
+          }
+      end
+    end
+    
     resource :cubes do
       content_type :json, "application/json"
       default_format :json
