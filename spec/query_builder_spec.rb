@@ -88,6 +88,15 @@ describe "Query Builder" do
     expect(q.to_mdx).to eq("SELECT {[Measures].[Unit Sales]} ON COLUMNS,\n{Product.Product Family.Drink} ON ROWS\nFROM [Sales]")
   end
 
+  it "should slice on a tuple if more than one member provided in cut" do
+    q = @qh.build_query(@cube,
+                        {
+                          'drilldown' => ['Product.Product Category'],
+                          'cut' => ['Time.Year.1997', '[Store Type].[Supermarket]']
+                        })
+    expect(q.to_mdx).to eq("SELECT {[Measures].[Unit Sales]} ON COLUMNS,\n[Product].[Product Category].Members ON ROWS\nFROM [Sales]\nWHERE (Time.Year.1997, [Store Type].[Supermarket])")
+  end
+
   describe "parse_cut" do
     it "should correctly parse a cut specified as a set" do
       l = @cube.dimension('Product').hierarchies[0].level('Product Family')
