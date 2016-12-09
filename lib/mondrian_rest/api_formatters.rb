@@ -97,7 +97,7 @@ module Mondrian::REST::Formatters
         if add_parents
           hier = cube.dimension(dd[:name])
                    .hierarchies
-                   .first
+                   .first # TODO: Support other hierarchies
 
           level_has_all << hier.has_all?
           slices << dd[:level_depth]
@@ -133,6 +133,7 @@ module Mondrian::REST::Formatters
         msrs = measures.map.with_index { |m, mi|
           (cidxs + [mi]).reduce(values) { |_, idx| _[idx] }
         }
+
         if add_parents
           vdim = cm.each.with_index.reduce([]) { |cnames, (member, j)|
             member[:ancestors][0...slices[j] - (level_has_all[j] ? 1 : 0)].reverse.each { |ancestor|
@@ -140,7 +141,7 @@ module Mondrian::REST::Formatters
             }
             cnames += [member[:key], member[:caption]]
           }
-          y.yield vdim + get_props(cm, pnames) + msrs
+          y.yield vdim + get_props(cm, pnames, true) + msrs
         else
 
           row = pluck(cm, :key)
@@ -153,7 +154,7 @@ module Mondrian::REST::Formatters
     end
   end
 
-  def self.get_props(cm, pnames)
+  def self.get_props(cm, pnames, dbg=false)
     pvalues = pluck(cm, :properties).reduce({}) { |h, p|
       h.merge(p || {})
     }

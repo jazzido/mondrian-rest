@@ -158,14 +158,14 @@ describe "Cube API" do
   end
 
   it "should include member properties if requested" do
-    get '/cubes/HR/aggregate?drilldown[]=Time.Year&drilldown[]=Store.Store%20Name&measures[]=Org%20Salary&properties[]=Store.Has%20coffee%20bar&properties[]=Store.Grocery%20Sqft'
+    get '/cubes/HR/aggregate?drilldown[]=Time.Year&drilldown[]=Store.Store%20Name&measures[]=Org%20Salary&properties[]=Store.Store%20Name.Has%20coffee%20bar&properties[]=Store.Store%20Name.Grocery%20Sqft'
     r = JSON.parse(last_response.body)
     expect(r['axes'][-1]['members'].map { |m| m['properties'] }).to all(include('Has coffee bar'))
     expect(r['axes'][-1]['members'].map { |m| m['properties'] }).to all(include('Grocery Sqft'))
   end
 
   it "should include member properties in CSV if requested" do
-    get '/cubes/HR/aggregate.csv?drilldown[]=Time.Year&drilldown[]=Store.Store%20Name&measures[]=Org%20Salary&properties[]=Store.Has%20coffee%20bar&properties[]=Store.Grocery%20Sqft'
+    get '/cubes/HR/aggregate.csv?drilldown[]=Time.Year&drilldown[]=Store.Store%20Name&measures[]=Org%20Salary&properties[]=Store.Store%20Name.Has%20coffee%20bar&properties[]=Store.Store%20Name.Grocery%20Sqft'
     csv = CSV.parse(last_response.body)
     expect(csv.first).to eq(["ID Year", "Year", "ID Store Name", "Store Name", "Has coffee bar", "Grocery Sqft", "Org Salary"])
   end

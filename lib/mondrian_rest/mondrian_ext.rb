@@ -155,11 +155,11 @@ module Mondrian
           axes: self.axis_members.each_with_index.map { |a, i|
             {
               members: a.map { |m|
-                mh = m.to_h(pprops[m.raw_member.getDimension.name] || [])
+                mh = m.to_h(pprops.dig(m.raw_member.getDimension.name, m.raw_level.name) || [])
                 if parents
                   mh.merge!({
                               ancestors: m.ancestors.map { |ma|
-                                ma.to_h(pprops[ma.raw_member.getDimension.name] || [])
+                                ma.to_h(pprops.dig(ma.raw_member.getDimension.name, ma.raw_level.name) || [])
                               }
                             })
                 end
@@ -182,10 +182,11 @@ module Mondrian
       ##
       #
       def parse_properties(dimensions)
-        self.properties.reduce({}) { |h, p|
+
+        self.properties.map { |p|
           sl = org.olap4j.mdx.IdentifierNode.parseIdentifier(p).getSegmentList.to_a
-          if sl.size != 2
-            raise "Properties must be in the form `Dimension.Property Name`"
+          if sl.size != 3
+            raise "Properties must be in the form `Dimension.Level.Property Name`"
           end
 
           # check that the dimension is in the drilldown list
@@ -193,9 +194,11 @@ module Mondrian
             raise "Dimension `#{sl[0].name}` not in drilldown list"
           end
 
-          h[sl[0].name] ||= []
-          h[sl[0].name] << sl[1].name
-          h
+          sl.map(&:name)
+        }.group_by(&:first)
+         .reduce({}) { |h, (k,v)|
+            h[k] = Hash[v.group_by { |x| x[1] }.map { |k, v| [k, v.map(&:last) ] }]
+            h
         }
       end
     end
