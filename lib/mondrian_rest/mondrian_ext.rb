@@ -100,6 +100,7 @@ module Mondrian
         kv << [:key, self.property_value('MEMBER_KEY')]
         kv << [:num_children, self.property_value('CHILDREN_CARDINALITY')]
         kv << [:parent_name, self.property_value('PARENT_UNIQUE_NAME')]
+        kv << [:level_name, self.raw_level.name]
 
         if properties.size > 0
           kv << [
@@ -146,7 +147,8 @@ module Mondrian
         dimensions = self.axis_members.map { |am| am.first.dimension_info }
 
         pprops = unless self.properties.nil?
-                   parse_properties(dimensions[1..-1]) # exclude Measures dimension
+                   Mondrian::REST::APIHelpers.parse_properties(self.properties,
+                                                               dimensions[1..-1]) # exclude Measures dimension
                  else
                    {}
                  end
@@ -175,31 +177,6 @@ module Mondrian
 
         rv
 
-      end
-
-      private
-
-      ##
-      #
-      def parse_properties(dimensions)
-
-        self.properties.map { |p|
-          sl = org.olap4j.mdx.IdentifierNode.parseIdentifier(p).getSegmentList.to_a
-          if sl.size != 3
-            raise "Properties must be in the form `Dimension.Level.Property Name`"
-          end
-
-          # check that the dimension is in the drilldown list
-          if dimensions.find { |ad| sl[0].name == ad[:name] }.nil?
-            raise "Dimension `#{sl[0].name}` not in drilldown list"
-          end
-
-          sl.map(&:name)
-        }.group_by(&:first)
-         .reduce({}) { |h, (k,v)|
-            h[k] = Hash[v.group_by { |x| x[1] }.map { |k, v| [k, v.map(&:last) ] }]
-            h
-        }
       end
     end
   end

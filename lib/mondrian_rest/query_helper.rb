@@ -30,6 +30,9 @@ module Mondrian::REST
       member
     end
 
+    ##
+    # Parses a string containing a 'cut' expression
+    # It can be a set ({Dim.Mem, Dim2.Mem2}), a range (([Time].[Year].[1997]:[Time].[Year].[1998])) or a member identifier.
     def parse_cut(cube, cut_expr)
       p = mdx_parser.parseExpression(cut_expr)
 

@@ -113,6 +113,7 @@ module Mondrian::REST::Formatters
         columns += ["ID #{dd[:level]}", dd[:level]]
       end
 
+      props = Mondrian::REST::APIHelpers.parse_properties(properties, dimensions)
       pnames = properties.map { |p|
         org.olap4j.mdx.IdentifierNode.parseIdentifier(p).getSegmentList.last.name
       }
@@ -141,24 +142,42 @@ module Mondrian::REST::Formatters
             }
             cnames += [member[:key], member[:caption]]
           }
-          y.yield vdim + get_props(cm, pnames, true) + msrs
-        else
 
+          y.yield vdim + get_props(cm, pnames, props, dimensions) + msrs
+        else
           row = pluck(cm, :key)
                   .zip(pluck(cm, :caption))
                   .flatten
 
-          y.yield row + get_props(cm, pnames) + msrs
+          y.yield row + get_props(cm, pnames, props, dimensions) + msrs
         end
       end
     end
   end
 
-  def self.get_props(cm, pnames, dbg=false)
-    pvalues = pluck(cm, :properties).reduce({}) { |h, p|
-      h.merge(p || {})
-    }
-
+  def self.get_props(cm, pnames, props, dimensions)
+    pvalues = cm.each.with_index.reduce({}) do |h, (member, ax_i)|
+      dname = dimensions[ax_i][:name]
+      if props[dname] # are there properties requested for members of this dimension?
+        mmbr_lvl = dimensions[ax_i][:level]
+        (props[dname][mmbr_lvl] || []).each { |p|
+          h[p] = member[:properties][p]
+        }
+        if member[:ancestors]
+          props[dname]
+            .select { |k, _| k != mmbr_lvl } # levels other than member's own
+            .each { |l, p|
+            p.each # get all requested props for this level's ancestor
+              .with_object(member[:ancestors].find { |anc|
+                             anc[:level_name] == l
+                           }) { |prop, anc|
+              h[prop] = anc[:properties][prop]
+            }
+          }
+        end
+      end
+      h
+    end # reduce
     pnames.map { |pn| pvalues[pn] }
   end
 

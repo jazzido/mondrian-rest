@@ -57,7 +57,7 @@ describe "Cube API" do
 
   it "should return a member by full name" do
     get '/cubes/Sales%202/members?full_name=%5BProduct%5D.%5BDrink%5D'
-    expected = {"name"=>"Drink", "full_name"=>"[Product].[Drink]", "caption"=>"Drink", "all_member?"=>false, "drillable?"=>true, "depth"=>1, "key"=>"Drink", "num_children"=>3, "parent_name"=>"[Product].[All Products]", "ancestors"=>[{"name"=>"All Products", "full_name"=>"[Product].[All Products]", "caption"=>"All Products", "all_member?"=>true, "drillable?"=>true, "depth"=>0, "key"=>0, "num_children"=>3, "parent_name"=>nil}], "dimension"=>{"name"=>"Product", "caption"=>"Product", "type"=>"standard", "level"=>"Product Family", "level_depth"=>1}}
+    expected = {"name"=>"Drink", "full_name"=>"[Product].[Drink]", "caption"=>"Drink", "all_member?"=>false, "drillable?"=>true, "depth"=>1, "key"=>"Drink", "level_name" => "Product Family", "num_children"=>3, "parent_name"=>"[Product].[All Products]", "ancestors"=>[{"name"=>"All Products", "full_name"=>"[Product].[All Products]", "caption"=>"All Products", "all_member?"=>true, "drillable?"=>true, "depth"=>0, "key"=>0, "num_children"=>3, "parent_name"=>nil, "level_name"=>"(All)"}], "dimension"=>{"name"=>"Product", "caption"=>"Product", "type"=>"standard", "level"=>"Product Family", "level_depth"=>1}}
     expect(JSON.parse(last_response.body)).to eq(expected)
   end
 
@@ -171,14 +171,13 @@ describe "Cube API" do
   end
 
   it "should include member properties in CSV when parents are requested" do
-    get '/cubes/HR/aggregate.csv?drilldown[]=Time.Year&drilldown[]=Store.Store%20Name&measures[]=Org%20Salary&properties[]=Store.Has%20coffee%20bar&properties[]=Store.Grocery%20Sqft&parents=true'
+    get '/cubes/HR/aggregate.csv?drilldown[]=Time.Year&drilldown[]=Store.Store%20Name&measures[]=Org%20Salary&properties[]=Store.Store%20Name.Has%20coffee%20bar&properties[]=Store.Store%20Name.Grocery%20Sqft&parents=true'
     csv = CSV.parse(last_response.body)
     expect(csv.first).to eq(["ID Year", "Year", "ID Store Country", "Store Country", "ID Store State", "Store State", "ID Store City", "Store City", "ID Store Name", "Store Name", "Has coffee bar", "Grocery Sqft", "Org Salary"])
   end
 
   it "should fail if requested member properties of a dimension not in drilldown[]" do
-    get '/cubes/HR/aggregate?drilldown[]=Time.Year&&measures[]=Org%20Salary&properties[]=Store.Has%20coffee%20bar&properties[]=Store.Grocery%20Sqft'
+    get '/cubes/HR/aggregate?drilldown[]=Time.Year&&measures[]=Org%20Salary&properties[]=Store.Store%20Name.Has%20coffee%20bar&properties[]=Store.Store%20Name.Grocery%20Sqft'
     expect(400).to eq(last_response.status)
   end
-
 end

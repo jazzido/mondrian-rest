@@ -46,5 +46,28 @@ module Mondrian::REST
       end
     end
 
+    ##
+    # parse an array of property specifications like so:
+    # input: ['ISICrev4.Level 2.Level 2 ES', 'ISICrev4.Level 1.Level 1 ES']
+    # output: {"ISICrev4"=>{"Level 2"=>["Level 2 ES"], "Level 1"=>["Level 1 ES"]}}
+    def self.parse_properties(properties, dimensions)
+      properties.map { |p|
+        sl = org.olap4j.mdx.IdentifierNode.parseIdentifier(p).getSegmentList.to_a
+        if sl.size != 3
+          raise "Properties must be in the form `Dimension.Level.Property Name`"
+        end
+
+        # check that the dimension is in the drilldown list
+        if dimensions.find { |ad| sl[0].name == ad[:name] }.nil?
+          raise "Dimension `#{sl[0].name}` not in drilldown list"
+        end
+
+        sl.map(&:name)
+      }.group_by(&:first)
+        .reduce({}) { |h, (k,v)|
+        h[k] = Hash[v.group_by { |x| x[1] }.map { |k1, v1| [k1, v1.map(&:last)] }]
+        h
+      }
+    end
   end
 end
