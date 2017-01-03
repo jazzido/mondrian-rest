@@ -115,7 +115,7 @@ module Mondrian
         Hash[kv]
       end
 
-      def pcaption(caption_property)
+      def pcaption(caption_property=nil)
         if caption_property
           self.property_value(caption_property)
         else
