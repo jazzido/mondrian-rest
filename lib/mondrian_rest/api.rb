@@ -82,7 +82,7 @@ module Mondrian::REST
             params do
               requires :full_name,
                        type: String,
-                       regexp: /[a-z0-9\.,\-\s%\\[\\]\(\)]+/i
+                       regexp: /[a-z0-9\.,\-\s%\[\]\(\)]+/i
             end
             get do
               member_full_name = URI.decode(params[:full_name])
