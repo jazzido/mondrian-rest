@@ -46,6 +46,20 @@ module Mondrian::REST
       end
     end
 
+    NEST = Mondrian::REST::Nest.new
+             .key { |d| d[0] }
+             .key { |d| d[1] }
+
+    def self.parse_caption_properties(cprops)
+      if cprops.size < 1
+        return {}
+      end
+
+      NEST.map(cprops.map { |cp|
+                 org.olap4j.mdx.IdentifierNode.parseIdentifier(cp).getSegmentList.to_a.map(&:name)
+             })
+    end
+
     ##
     # parse an array of property specifications like so:
     # input: ['ISICrev4.Level 2.Level 2 ES', 'ISICrev4.Level 1.Level 1 ES']

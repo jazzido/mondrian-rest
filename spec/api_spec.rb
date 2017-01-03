@@ -180,4 +180,10 @@ describe "Cube API" do
     get '/cubes/HR/aggregate?drilldown[]=Time.Year&&measures[]=Org%20Salary&properties[]=Store.Store%20Name.Has%20coffee%20bar&properties[]=Store.Store%20Name.Grocery%20Sqft'
     expect(400).to eq(last_response.status)
   end
+
+  it "should replace default caption with the `caption` parameter" do
+    get '/cubes/HR/aggregate.csv?drilldown[]=Time.Year&drilldown[]=Store.Store%20Name&measures[]=Org%20Salary&caption[]=Store.Store%20Name.Has%20coffee%20bar'
+    expect(CSV.parse(last_response.body)[1..-1].map { |r| r[3] }).to all(eq('1').or eq('0'))
+  end
+
 end

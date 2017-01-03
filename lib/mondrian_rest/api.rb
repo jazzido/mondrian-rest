@@ -123,6 +123,7 @@ module Mondrian::REST
             optional :parents, type: Boolean, desc: "Include members' ancestors"
             optional :debug, type: Boolean, desc: "Include generated MDX", default: false
             optional :properties, type: Array, desc: "Include member properties"
+            optional :caption, type: Array, desc: "Replace caption with property", default: []
           end
           get do
             cube = get_cube_or_404(params[:cube_name])
@@ -132,6 +133,7 @@ module Mondrian::REST
             result = mdx(query.to_mdx)
             result.mdx = mdx_query if params[:debug]
             result.properties = params[:properties]
+            result.caption_properties = params[:caption]
             result.cube = cube
 
             result

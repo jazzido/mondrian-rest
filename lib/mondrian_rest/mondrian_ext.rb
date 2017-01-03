@@ -88,15 +88,18 @@ module Mondrian
 
     class Member
 
+      alias_method :_caption, :caption
+
       def raw_level
         @raw_member.getLevel
       end
 
-      def to_h(properties=[])
-        kv = [:name, :full_name, :caption, :all_member?,
+      def to_h(properties=[], caption_property=nil)
+        kv = [:name, :full_name, :all_member?,
               :drillable?, :depth].map { |m|
           [m, self.send(m)]
         }
+        kv << [:caption, self.pcaption(caption_property)]
         kv << [:key, self.property_value('MEMBER_KEY')]
         kv << [:num_children, self.property_value('CHILDREN_CARDINALITY')]
         kv << [:parent_name, self.property_value('PARENT_UNIQUE_NAME')]
@@ -110,6 +113,14 @@ module Mondrian
         end
 
         Hash[kv]
+      end
+
+      def pcaption(caption_property)
+        if caption_property
+          self.property_value(caption_property)
+        else
+          self._caption
+        end
       end
 
       def dimension_info
@@ -133,7 +144,7 @@ module Mondrian
 
     class Result
 
-      attr_accessor :cube, :mdx, :properties
+      attr_accessor :cube, :mdx, :properties, :caption_properties
 
       def to_json
         to_h.to_json
@@ -153,15 +164,25 @@ module Mondrian
                    {}
                  end
 
+        cprops = Mondrian::REST::APIHelpers.parse_caption_properties(
+          self.caption_properties
+        )
+
         rv = {
           axes: self.axis_members.each_with_index.map { |a, i|
             {
               members: a.map { |m|
-                mh = m.to_h(pprops.dig(m.raw_member.getDimension.name, m.raw_level.name) || [])
+                mh = m.to_h(
+                  pprops.dig(m.raw_member.getDimension.name, m.raw_level.name) || [],
+                  (cprops.dig(m.raw_member.getDimension.name, m.raw_level.name) || [[]])[0][-1]
+                )
                 if parents
                   mh.merge!({
                               ancestors: m.ancestors.map { |ma|
-                                ma.to_h(pprops.dig(ma.raw_member.getDimension.name, ma.raw_level.name) || [])
+                                ma.to_h(
+                                  pprops.dig(ma.raw_member.getDimension.name, ma.raw_level.name) || [],
+                                  (cprops.dig(ma.raw_member.getDimension.name, ma.raw_level.name) || [[]])[0][-1]
+                                )
                               }
                             })
                 end
