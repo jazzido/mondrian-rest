@@ -1,4 +1,8 @@
 module Mondrian::REST
+
+  class PropertyError < StandardError
+  end
+
   module APIHelpers
 
     @@olap = nil
@@ -68,12 +72,12 @@ module Mondrian::REST
       properties.map { |p|
         sl = org.olap4j.mdx.IdentifierNode.parseIdentifier(p).getSegmentList.to_a
         if sl.size != 3
-          raise "Properties must be in the form `Dimension.Level.Property Name`"
+          raise PropertyError, "Properties must be in the form `Dimension.Level.Property Name`"
         end
 
         # check that the dimension is in the drilldown list
         if dimensions.find { |ad| sl[0].name == ad[:name] }.nil?
-          raise "Dimension `#{sl[0].name}` not in drilldown list"
+          raise PropertyError, "Dimension `#{sl[0].name}` not in drilldown list"
         end
 
         sl.map(&:name)

@@ -55,7 +55,7 @@ module Mondrian::REST
           }
       end
     end
-    
+
     resource :cubes do
       content_type :json, "application/json"
       default_format :json
@@ -112,6 +112,10 @@ module Mondrian::REST
 
           content_type :jsonrecords, "application/x-jsonrecords"
           formatter :jsonrecords, Mondrian::REST::Formatters::JSONRecords
+
+          rescue_from PropertyError do |e|
+            error!({error: e}, 400)
+          end
 
           desc "aggregate from query parameters"
           params do
