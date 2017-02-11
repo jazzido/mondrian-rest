@@ -1,3 +1,5 @@
+require 'set'
+
 module Mondrian
   module OLAP
 
@@ -23,7 +25,10 @@ module Mondrian
                     :full_name => l.full_name,
                     :caption => l.caption,
                     :depth => l.depth,
-                    :annotations => l.annotations
+                    :annotations => l.annotations,
+                    :properties => l.own_props.map { |p|
+                      p.getName
+                    }
                   }
                 }
               }
@@ -68,6 +73,8 @@ module Mondrian
       end
     end
 
+    INTERNAL_PROPS = Set.new(['CATALOG_NAME', 'SCHEMA_NAME', 'CUBE_NAME', 'DIMENSION_UNIQUE_NAME', 'HIERARCHY_UNIQUE_NAME', 'LEVEL_UNIQUE_NAME', 'LEVEL_NUMBER', 'MEMBER_ORDINAL', 'MEMBER_NAME', 'MEMBER_UNIQUE_NAME', 'MEMBER_TYPE', 'MEMBER_GUID', 'MEMBER_CAPTION', 'CHILDREN_CARDINALITY', 'PARENT_LEVEL', 'PARENT_UNIQUE_NAME', 'PARENT_COUNT', 'DESCRIPTION', '$visible', 'MEMBER_KEY', 'IS_PLACEHOLDERMEMBER', 'IS_DATAMEMBER', 'DEPTH', 'DISPLAY_INFO', 'VALUE', '$scenario', 'CELL_FORMATTER', 'CELL_FORMATTER_SCRIPT', 'CELL_FORMATTER_SCRIPT_LANGUAGE', 'DISPLAY_FOLDER', 'FORMAT_EXP', 'KEY', '$name']).freeze
+
     class Level
       attr_reader :hierarchy
 
@@ -81,9 +88,19 @@ module Mondrian
           caption: self.caption,
           members: self.members
             .uniq { |m| m.property_value('MEMBER_KEY') }
-            .map { |m| m.to_h(member_properties) }
+            .map { |m| m.to_h(member_properties) },
+          :properties => self.own_props.map { |p|
+            p.getName
+          }
         }
       end
+
+      def own_props
+        @raw_level.properties.select { |p|
+          !INTERNAL_PROPS.include?(p.name)
+        }
+      end
+
     end
 
     class Member

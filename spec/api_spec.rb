@@ -33,6 +33,13 @@ describe "Cube API" do
     expect(cube['dimensions'].map { |d| d['name'] }).to eq(['Time', 'Product', 'Gender'])
   end
 
+  it "should return a list of properties of a Level" do
+    get '/cubes/Store'
+    cube = JSON.parse(last_response.body)
+
+    expect(cube['dimensions'].map { |d| d['hierarchies'][0]['levels'] }.flatten.map { |l| l['properties'] }).to eq([[], [], [], [], [], [], ["Store Type", "Store Manager", "Store Sqft", "Grocery Sqft", "Frozen Sqft", "Meat Sqft", "Has coffee bar", "Street address"], [], []])
+  end
+
   it "should return the members of a dimension" do
     get '/cubes/Sales%202/dimensions/Product'
     dim = JSON.parse(last_response.body)
