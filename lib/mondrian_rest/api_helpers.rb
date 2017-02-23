@@ -55,7 +55,7 @@ module Mondrian::REST
              .key { |d| d[1] }
 
     def self.parse_caption_properties(cprops)
-      if cprops.size < 1
+      if cprops.nil? or cprops.size < 1
         return {}
       end
 
