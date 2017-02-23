@@ -183,7 +183,7 @@ module Mondrian::REST
 
       # slicer axes (cut)
       if slicer_axis.size >= 1
-        query = query.where(slicer_axis.values.map { |v| v[:cut] })
+        query = query.where(slicer_axis.values.map { |v| v[:cut] }.join(' * '))
       end
       query
     end

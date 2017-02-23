@@ -94,7 +94,19 @@ describe "Query Builder" do
                           'drilldown' => ['Product.Product Category'],
                           'cut' => ['Time.Year.1997', '[Store Type].[Supermarket]']
                         })
-    expect(q.to_mdx).to eq("SELECT {[Measures].[Unit Sales]} ON COLUMNS,\n[Product].[Product Category].Members ON ROWS\nFROM [Sales]\nWHERE (Time.Year.1997, [Store Type].[Supermarket])")
+    # likely this is invalid MDX, but mondrian will rewrite it as
+    # ... WHERE ({Time.Year.1997} * {[Store Type].[Supermarket]})
+    # ie. cross join of sets of cardinality = 1
+    expect(q.to_mdx).to eq("SELECT {[Measures].[Unit Sales]} ON COLUMNS,\n[Product].[Product Category].Members ON ROWS\nFROM [Sales]\nWHERE (Time.Year.1997 * [Store Type].[Supermarket])")
+  end
+
+  it "should slice on a crossjoin of the sets provided in the cut" do
+    q = @qh.build_query(@cube,
+                        {
+                          'drilldown' => ['Product.Product Category'],
+                          'cut' => ['Time.Year.1997', '{[Store Type].[Supermarket], [Store Type].[Deluxe Supermarket]}']
+                        })
+    expect(q.to_mdx).to eq("SELECT {[Measures].[Unit Sales]} ON COLUMNS,\n[Product].[Product Category].Members ON ROWS\nFROM [Sales]\nWHERE (Time.Year.1997 * {[Store Type].[Supermarket], [Store Type].[Deluxe Supermarket]})")
   end
 
   describe "parse_cut" do
