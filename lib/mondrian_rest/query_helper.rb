@@ -18,16 +18,11 @@ module Mondrian::REST
 
     def get_member(cube, member_exp)
       begin
-        rm = cube.raw_cube
-           .lookupMember(org.olap4j.mdx.IdentifierNode.parseIdentifier(member_exp).getSegmentList)
+        m = cube.member(member_exp)
       rescue Java::JavaLang::IllegalArgumentException
         error!("Illegal member expression: #{member_exp}", 400)
       end
-      member = nil
-      unless rm.nil?
-        member = Mondrian::OLAP::Member.new(rm)
-      end
-      member
+      m
     end
 
     ##
