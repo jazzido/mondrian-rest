@@ -18,16 +18,15 @@ module Mondrian::REST
 
     def get_member(cube, member_exp)
       begin
-        m = cube.member(member_exp)
+        return cube.member(member_exp)
       rescue Java::JavaLang::IllegalArgumentException
         error!("Illegal member expression: #{member_exp}", 400)
       end
-      m
     end
 
     ##
     # Parses a string containing a 'cut' expression
-    # It can be a set ({Dim.Mem, Dim2.Mem2}), a range (([Time].[Year].[1997]:[Time].[Year].[1998])) or a member identifier.
+    # It can be a set (`{Dim.Mem, Dim2.Mem2}`), a range (`([Time].[Year].[1997]:[Time].[Year].[1998])`) or a member identifier (`[Time].[Year].[1998]`).
     def parse_cut(cube, cut_expr)
       p = mdx_parser.parseExpression(cut_expr)
 
