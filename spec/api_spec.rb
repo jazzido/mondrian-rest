@@ -101,7 +101,7 @@ describe "Cube API" do
   end
 
   it "should aggregate on the next level of the dimension in the cut" do
-    get '/cubes/Sales/aggregate?drilldown[]=Product&measures[]=Store%20Sales&cut[]=Product.Product%20Family.Drink'
+    get '/cubes/Sales/aggregate?drilldown[]=Product&measures[]=Store%20Sales&cut[]=[Product].[Product%20Family].Drink'
     puts last_response.body
     # XXX TODO assertions
   end
