@@ -107,10 +107,18 @@ describe "Cube API" do
   end
 
   it "should cut and drilldown skipping levels correctly" do
-    pending "What do we do about this case? (same hierarchy in >1 independent axes)"
     get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&cut[]=[Customers].[Country].[USA]'
     exp = ["Altadena", "Arcadia", "Bellflower", "Berkeley", "Beverly Hills", "Burbank", "Burlingame", "Chula Vista", "Colma", "Concord", "Coronado", "Daly City", "Downey", "El Cajon", "Fremont", "Glendale", "Grossmont", "Imperial Beach", "La Jolla", "La Mesa", "Lakewood", "Lemon Grove", "Lincoln Acres", "Long Beach", "Los Angeles", "Mill Valley", "National City", "Newport Beach", "Novato", "Oakland", "Palo Alto", "Pomona", "Redwood City", "Richmond", "San Carlos", "San Diego", "San Francisco", "San Gabriel", "San Jose", "Santa Cruz", "Santa Monica", "Spring Valley", "Torrance", "West Covina", "Woodland Hills", "Albany", "Beaverton", "Corvallis", "Lake Oswego", "Lebanon", "Milwaukie", "Oregon City", "Portland", "Salem", "W. Linn", "Woodburn", "Anacortes", "Ballard", "Bellingham", "Bremerton", "Burien", "Edmonds", "Everett", "Issaquah", "Kirkland", "Lynnwood", "Marysville", "Olympia", "Port Orchard", "Puyallup", "Redmond", "Renton", "Seattle", "Sedro Woolley", "Spokane", "Tacoma", "Walla Walla", "Yakima"]
     expect(exp).to eq(JSON.parse(last_response.body)['axes'][2]['members'].map { |m| m['caption'] })
+  end
+
+  it "should drilldown on the set union of descendents of the cut" do
+    #get '/cubes/Sales/aggregate?drilldown[]=Time.Year&drilldown[]=Customers.City&measures[]=Store%20Sales&cut[]={[Customers].[Country].[Mexico], [Customers].[Country].[Canada]}'
+    get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=[Product].[Product Name]&measures[]=Unit%20Sales&cut[]={[Product].[Product Department].[Produce], [Product].[Product Department].[Seafood]}&cut[]=[Time].[Year].[1997]'
+    fnames = JSON.parse(last_response.body)['axes'][2]['members'].map { |m| m['full_name'] }
+    # assert that we only obtained descendants of 'Produce' and 'Seafood'
+    re = /\[([^\]]+)\]/
+    expect(["Produce", "Seafood"]).to eq(fnames.map { |fn| fn.scan(re)[2][0] }.uniq.sort)
   end
 
   it "should not allow drilling down on an ascendant" do

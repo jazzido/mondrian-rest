@@ -109,6 +109,18 @@ describe "Query Builder" do
     expect(q.to_mdx).to eq("SELECT {[Measures].[Unit Sales]} ON COLUMNS,\n[Product].[Product Category].Members ON ROWS\nFROM [Sales]\nWHERE (Time.Year.1997 * {[Store Type].[Supermarket], [Store Type].[Deluxe Supermarket]})")
   end
 
+  it "should drilldown on the descendants if drilling down on a higher level than the cut" do
+    q = @qh.build_query(@cube,
+                        {
+                          'drilldown' => ['Product.Product Category'],
+                          'cut' => ['Product.Product Family.Drink'],
+                          'measures' => ['Unit Sales']
+                        })
+
+    expect(q.to_mdx).to eq("SELECT {[Measures].[Unit Sales]} ON COLUMNS,\nDESCENDANTS(Product.Product Family.Drink, [Product].[Product Category]) ON ROWS\nFROM [Sales]")
+  end
+
+
   describe "parse_cut" do
     it "should correctly parse a cut specified as a set" do
       l = @cube.dimension('Product').hierarchies[0].level('Product Family')

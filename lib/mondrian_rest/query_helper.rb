@@ -36,13 +36,14 @@ module Mondrian::REST
         case p.getOperatorName
         when "{}"
           # check that the set contains only Members of a single dimension level
-          ls = p.getArgList.map { |id_node|
-            get_member(cube, unparse_node(id_node)).raw_level
-          }.uniq
+          set_members = p.getArgList.map { |id_node|
+            get_member(cube, unparse_node(id_node))
+          }
+          ls = set_members.map(&:raw_level).uniq
           unless ls.size == 1
             error!("Illegal cut: " + cut_expr, 400)
           end
-          { level: ls.first, cut: unparse_node(p), type: :set }
+          { level: ls.first, cut: unparse_node(p), type: :set, set_members: set_members }
         when "()"
           # check that the range contains a valid range
 
@@ -154,6 +155,24 @@ module Mondrian::REST
             "{#{cut[:cut]}}"
           else
             cut[:cut]
+          end
+        elsif cut = slicer_axis.find { |lvl, cut|
+                qa.raw_level.hierarchy == lvl.hierarchy && lvl.depth < qa.depth
+              }
+          slicer_axis.delete(cut[0])
+          cut = cut[1]
+          puts "FOUND #{qa.full_name} deeper than #{cut[:level].uniqueName}"
+          case cut[:type]
+          when :member
+            "DESCENDANTS(#{cut[:cut]}, #{qa.full_name})"
+          when :set
+            # TODO
+            "{" + cut[:set_members].map { |m|
+              "DESCENDANTS(#{m.full_name}, #{qa.full_name})"
+            }.join(",") + "}"
+          when :range
+            # TODO
+            raise "Unsupported operation"
           end
         else
           qa.raw_level.unique_name + '.Members'
