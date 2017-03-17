@@ -160,7 +160,7 @@ module Mondrian::REST
               }
           slicer_axis.delete(cut[0])
           cut = cut[1]
-          puts "FOUND #{qa.full_name} deeper than #{cut[:level].uniqueName}"
+
           case cut[:type]
           when :member
             "DESCENDANTS(#{cut[:cut]}, #{qa.full_name})"
