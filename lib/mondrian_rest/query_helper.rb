@@ -77,6 +77,13 @@ module Mondrian::REST
     # Parses a drilldown specification
     # XXX TODO write doc
     def parse_drilldown(cube, drilldown)
+
+      # check if the drilldown is a named set
+      named_sets = cube.named_sets
+      if ns = named_sets.find { |ns| ns.name == drilldown }
+        return ns
+      end
+
       begin
         s = org.olap4j.mdx.IdentifierNode.parseIdentifier(drilldown).getSegmentList
       rescue Java::JavaLang::IllegalArgumentException
@@ -146,8 +153,11 @@ module Mondrian::REST
       }
 
       dd = query_axes.map do |qa|
+        # if drilling down on a named set
+        if qa.kind_of?(Java::MondrianOlap4j::MondrianOlap4jNamedSet)
+          "[#{qa.name}]"
         # there's a slice (cut) on this axis
-        if slicer_axis[qa.raw_level]
+        elsif slicer_axis[qa.raw_level]
           cut = slicer_axis.delete(qa.raw_level)
           case cut[:type]
           when :member
@@ -160,7 +170,7 @@ module Mondrian::REST
               }
           slicer_axis.delete(cut[0])
           cut = cut[1]
-          puts "FOUND #{qa.full_name} deeper than #{cut[:level].uniqueName}"
+
           case cut[:type]
           when :member
             "DESCENDANTS(#{cut[:cut]}, #{qa.full_name})"

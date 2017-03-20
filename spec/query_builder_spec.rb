@@ -149,4 +149,13 @@ describe "Query Builder" do
       expect(pc[:level]).to eq(l.raw_level)
     end
   end
+
+  describe "named sets" do
+    it "should support drilling down on a named set" do
+      cube = @olap.cube('Warehouse')
+
+      q = @qh.build_query(cube, { 'drilldown' => ['Top Sellers']})
+      expect(q.to_mdx).to eq("SELECT {[Measures].[Store Invoice]} ON COLUMNS,\n{[Top Sellers]} ON ROWS\nFROM [Warehouse]")
+    end
+  end
 end

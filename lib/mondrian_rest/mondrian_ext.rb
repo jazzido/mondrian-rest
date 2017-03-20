@@ -4,11 +4,16 @@ module Mondrian
   module OLAP
 
     class Cube
+
+      def named_sets
+        raw_cube.getSets
+      end
+
       def to_h
         # gather dimensions
         dimensions = self.dimensions
-                     .find_all { |d| d.dimension_type != :measures }
-                     .map { |d|
+                       .find_all { |d| d.dimension_type != :measures }
+                       .map do |d|
           {
             :name => d.name,
             :caption => d.caption,
@@ -34,12 +39,36 @@ module Mondrian
               }
             }
           }
-        }
+        end
+
+        # gather named sets
+        named_sets = self.named_sets
+                       .map do |ns|
+
+          t = ns.getExpression.getType
+          {
+            :name => ns.name,
+            :dimension => t.getDimension.getName,
+            :hierarchy => t.getHierarchy.getName,
+            :level => t.getLevel.getName,
+            :annotations => begin
+                              annotated = ns.unwrap(Java::MondrianOlap::Annotated.java_class)
+                              annotations_hash = annotated.getAnnotationMap.to_hash
+                              annotations_hash.each do |key, annotation|
+                                annotations_hash[key] = annotation.getValue
+                              end
+                              annotations_hash
+                            rescue
+                              {}
+                            end
+          }
+        end
 
         return {
           :name => self.name,
           :annotations => self.annotations,
           :dimensions => dimensions,
+          :named_sets => named_sets,
           :measures => self.dimensions
                       .find(&:measures?)
                       .hierarchy

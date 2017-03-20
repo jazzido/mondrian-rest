@@ -403,6 +403,9 @@ Iif("sales_fact_1997"."promotion_id" = 0, 0, "sales_fact_1997"."store_sales")
     <CalculatedMemberProperty name="FORMAT_STRING" value="$#,##0.00"/>
   </CalculatedMember>
   <NamedSet name="Top Sellers">
+    <Annotations> <!-- added by manuel to test annotations in named sets -->
+      <Annotation name="named_set_annotation">Named Set Annotation</Annotation>
+    </Annotations>
     <Formula>TopCount([Warehouse].[Warehouse Name].MEMBERS, 5, [Measures].[Warehouse Sales])</Formula>
   </NamedSet>
 </Cube>

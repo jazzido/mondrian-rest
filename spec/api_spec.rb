@@ -33,6 +33,12 @@ describe "Cube API" do
     expect(cube['dimensions'].map { |d| d['name'] }).to eq(['Time', 'Product', 'Gender'])
   end
 
+  it "should return named sets in the definition of a cube" do
+    get '/cubes/Warehouse'
+    expect(JSON.parse(last_response.body)['named_sets']).to eq([{"name"=>"Top Sellers", "dimension"=>"Warehouse", "hierarchy"=>"Warehouse", "level"=>"Warehouse Name", "annotations"=>{"named_set_annotation"=>"Named Set Annotation"}}])
+
+  end
+
   it "should return a list of properties of a Level" do
     get '/cubes/Store'
     cube = JSON.parse(last_response.body)
@@ -199,6 +205,11 @@ describe "Cube API" do
   it "should replace default caption with the `caption` parameter" do
     get '/cubes/HR/aggregate.csv?drilldown[]=Time.Year&drilldown[]=Store.Store%20Name&measures[]=Org%20Salary&caption[]=Store.Store%20Name.Has%20coffee%20bar'
     expect(CSV.parse(last_response.body)[1..-1].map { |r| r[3] }).to all(eq('1').or eq('0'))
+  end
+
+  it "should drilldown on a named set" do
+    get '/cubes/Warehouse/aggregate.csv?drilldown[]=Top%20Sellers&measures[]=Warehouse%20Profit&nonempty=true'
+    expect(CSV.parse(last_response.body).size).to eq(6) # length=5 + header
   end
 
 end
