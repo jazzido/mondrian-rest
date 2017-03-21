@@ -128,7 +128,12 @@ module Mondrian::REST
             optional :debug, type: Boolean, desc: "Include generated MDX", default: false
             optional :properties, type: Array, desc: "Include member properties"
             optional :caption, type: Array, desc: "Replace caption with property", default: []
+            optional :filter,
+                     type: Hash,
+                     desc: "Filter dimensions",
+                     default: {}
           end
+
           get do
             cube = get_cube_or_404(params[:cube_name])
             query = build_query(cube, params)

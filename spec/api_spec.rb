@@ -20,64 +20,68 @@ describe "Cube API" do
     @app
   end
 
-  it "should return a list of cubes" do
-    get '/cubes'
-    expected = ["Sales 2", "Warehouse", "Sales Ragged", "Store", "HR", "Warehouse and Sales", "Sales"].sort
-    expect(JSON.parse(last_response.body)['cubes'].map { |c| c['name'] }.sort).to eq(expected)
+  describe "metadata" do
+
+    it "should return a list of cubes" do
+      get '/cubes'
+      expected = ["Sales 2", "Warehouse", "Sales Ragged", "Store", "HR", "Warehouse and Sales", "Sales"].sort
+      expect(JSON.parse(last_response.body)['cubes'].map { |c| c['name'] }.sort).to eq(expected)
+    end
+
+    it "should return the definition of a cube" do
+      get '/cubes/Sales%202'
+      cube = JSON.parse(last_response.body)
+      expect(cube['name']).to eq('Sales 2')
+      expect(cube['dimensions'].map { |d| d['name'] }).to eq(['Time', 'Product', 'Gender'])
+    end
+
+    it "should return named sets in the definition of a cube" do
+      get '/cubes/Warehouse'
+      expect(JSON.parse(last_response.body)['named_sets']).to eq([{"name"=>"Top Sellers", "dimension"=>"Warehouse", "hierarchy"=>"Warehouse", "level"=>"Warehouse Name", "annotations"=>{"named_set_annotation"=>"Named Set Annotation"}}])
+
+    end
+
+    it "should return a list of properties of a Level" do
+      get '/cubes/Store'
+      cube = JSON.parse(last_response.body)
+
+      expect(cube['dimensions'].map { |d| d['hierarchies'][0]['levels'] }.flatten.map { |l| l['properties'] }).to eq([[], [], [], [], [], [], ["Store Type", "Store Manager", "Store Sqft", "Grocery Sqft", "Frozen Sqft", "Meat Sqft", "Has coffee bar", "Street address"], [], []])
+    end
+
+    it "should return the members of a dimension" do
+      get '/cubes/Sales%202/dimensions/Product'
+      dim = JSON.parse(last_response.body)
+
+      expect(dim['hierarchies'].size).to eq(1)
+      expect(dim['hierarchies'].first['levels'].map { |l| l['name'] }).to eq(["(All)", "Product Family", "Product Department", "Product Category", "Product Subcategory", "Brand Name", "Product Name"])
+      expect(dim['hierarchies'].first['levels'][1]['members'].map { |l| l['name'] }).to eq(['Drink', 'Food', 'Non-Consumable'])
+    end
+
+    it "should return the members of a dimension level along with the requested properties" do
+      get '/cubes/Sales/dimensions/Store/levels/Store%20Name/members?member_properties[]=Street%20address&member_properties[]=Has%20coffee%20bar'
+      res = JSON.parse(last_response.body)
+      expect(res['members'].map { |m| m['properties' ]}).to all(have_key('Street address').and have_key('Has coffee bar'))
+    end
+
+    it "should return a member" do
+      get '/cubes/Sales%202/dimensions/Product/levels/Product%20Family/members/Drink'
+      m = JSON.parse(last_response.body)
+      expect(m['name']).to eq('Drink')
+      expect(m['full_name']).to eq('[Product].[Drink]')
+    end
+
+    it "should return a member by full name" do
+      get '/cubes/Sales%202/members?full_name=%5BProduct%5D.%5BDrink%5D'
+      expected = {"name"=>"Drink", "full_name"=>"[Product].[Drink]", "caption"=>"Drink", "all_member?"=>false, "drillable?"=>true, "depth"=>1, "key"=>"Drink", "level_name" => "Product Family", "num_children"=>3, "parent_name"=>"[Product].[All Products]", "ancestors"=>[{"name"=>"All Products", "full_name"=>"[Product].[All Products]", "caption"=>"All Products", "all_member?"=>true, "drillable?"=>true, "depth"=>0, "key"=>0, "num_children"=>3, "parent_name"=>nil, "level_name"=>"(All)"}], "dimension"=>{"name"=>"Product", "caption"=>"Product", "type"=>"standard", "level"=>"Product Family", "level_depth"=>1}}
+      expect(JSON.parse(last_response.body)).to eq(expected)
+    end
+
+    it "should return 404 if member can't be found" do
+      get '/cubes/Sales%202/members/%5BProduct%5D.%5BDoesNotExist%5D'
+      expect(404).to eq(last_response.status)
+    end
   end
 
-  it "should return the definition of a cube" do
-    get '/cubes/Sales%202'
-    cube = JSON.parse(last_response.body)
-    expect(cube['name']).to eq('Sales 2')
-    expect(cube['dimensions'].map { |d| d['name'] }).to eq(['Time', 'Product', 'Gender'])
-  end
-
-  it "should return named sets in the definition of a cube" do
-    get '/cubes/Warehouse'
-    expect(JSON.parse(last_response.body)['named_sets']).to eq([{"name"=>"Top Sellers", "dimension"=>"Warehouse", "hierarchy"=>"Warehouse", "level"=>"Warehouse Name", "annotations"=>{"named_set_annotation"=>"Named Set Annotation"}}])
-
-  end
-
-  it "should return a list of properties of a Level" do
-    get '/cubes/Store'
-    cube = JSON.parse(last_response.body)
-
-    expect(cube['dimensions'].map { |d| d['hierarchies'][0]['levels'] }.flatten.map { |l| l['properties'] }).to eq([[], [], [], [], [], [], ["Store Type", "Store Manager", "Store Sqft", "Grocery Sqft", "Frozen Sqft", "Meat Sqft", "Has coffee bar", "Street address"], [], []])
-  end
-
-  it "should return the members of a dimension" do
-    get '/cubes/Sales%202/dimensions/Product'
-    dim = JSON.parse(last_response.body)
-
-    expect(dim['hierarchies'].size).to eq(1)
-    expect(dim['hierarchies'].first['levels'].map { |l| l['name'] }).to eq(["(All)", "Product Family", "Product Department", "Product Category", "Product Subcategory", "Brand Name", "Product Name"])
-    expect(dim['hierarchies'].first['levels'][1]['members'].map { |l| l['name'] }).to eq(['Drink', 'Food', 'Non-Consumable'])
-  end
-
-  it "should return the members of a dimension level along with the requested properties" do
-    get '/cubes/Sales/dimensions/Store/levels/Store%20Name/members?member_properties[]=Street%20address&member_properties[]=Has%20coffee%20bar'
-    res = JSON.parse(last_response.body)
-    expect(res['members'].map { |m| m['properties' ]}).to all(have_key('Street address').and have_key('Has coffee bar'))
-  end
-
-  it "should return a member" do
-    get '/cubes/Sales%202/dimensions/Product/levels/Product%20Family/members/Drink'
-    m = JSON.parse(last_response.body)
-    expect(m['name']).to eq('Drink')
-    expect(m['full_name']).to eq('[Product].[Drink]')
-  end
-
-  it "should return a member by full name" do
-    get '/cubes/Sales%202/members?full_name=%5BProduct%5D.%5BDrink%5D'
-    expected = {"name"=>"Drink", "full_name"=>"[Product].[Drink]", "caption"=>"Drink", "all_member?"=>false, "drillable?"=>true, "depth"=>1, "key"=>"Drink", "level_name" => "Product Family", "num_children"=>3, "parent_name"=>"[Product].[All Products]", "ancestors"=>[{"name"=>"All Products", "full_name"=>"[Product].[All Products]", "caption"=>"All Products", "all_member?"=>true, "drillable?"=>true, "depth"=>0, "key"=>0, "num_children"=>3, "parent_name"=>nil, "level_name"=>"(All)"}], "dimension"=>{"name"=>"Product", "caption"=>"Product", "type"=>"standard", "level"=>"Product Family", "level_depth"=>1}}
-    expect(JSON.parse(last_response.body)).to eq(expected)
-  end
-
-  it "should return 404 if member can't be found" do
-    get '/cubes/Sales%202/members/%5BProduct%5D.%5BDoesNotExist%5D'
-    expect(404).to eq(last_response.status)
-  end
 
   it "should 404 if measure does not exist" do
     get '/cubes/Sales/aggregate?measures[]=doesnotexist'
@@ -210,6 +214,12 @@ describe "Cube API" do
   it "should drilldown on a named set" do
     get '/cubes/Warehouse/aggregate.csv?drilldown[]=Top%20Sellers&measures[]=Warehouse%20Profit&nonempty=true'
     expect(CSV.parse(last_response.body).size).to eq(6) # length=5 + header
+  end
+
+  it "should filter on an axis according to a criteria" do
+    get '/cubes/Sales/aggregate.csv?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&filter[1]=[Measures].[Store Sales]>1000&nonempty=true'
+
+    puts last_response.body
   end
 
 end

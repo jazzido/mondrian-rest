@@ -116,12 +116,12 @@ module Mondrian::REST
     end
 
     def build_query(cube, options={})
-
       measure_members = cube.dimension('Measures').hierarchy.levels.first.members
       options = {
         'cut' => [],
         'drilldown' => [],
         'measures' => [measure_members.first.name],
+        'filter' => {},
         'nonempty' => false,
         'distinct' => false
       }.merge(options)
@@ -188,10 +188,25 @@ module Mondrian::REST
         end
       end
 
+      # parse filters
+      filters = options['filter'].reduce({}) do |h, (axis_idx, filter_expr)|
+        axis_idx = axis_idx.to_i
+        if axis_idx + 1 > query_axes.size
+          error!("There's no axis #{axis_idx}", 400)
+        end
+
+        h[axis_idx] = filter_expr
+        h
+      end
+
       # query axes (drilldown)
-      dd.each do |ds|
+      dd.each_with_index do |ds, ds_i|
         query = query.axis(axis_idx,
                            ds)
+
+        if filters.has_key?(ds_i)
+          query = query.filter(filters[ds_i])
+        end
 
         if options['distinct']
           query = query.distinct
