@@ -1,3 +1,4 @@
+# coding: utf-8
 module Mondrian::REST
   module QueryHelper
 
@@ -67,6 +68,11 @@ module Mondrian::REST
         # if `cut_expr` looks like a member, check that it's level is
         # equal to `level`
         m = get_member(cube, cut_expr)
+
+        if m.nil?
+          error!("Illegal cut: #{cut_expr} — Member does not exist", 400)
+        end
+
         { level: m.raw_level, cut: cut_expr, type: :member }
       else
         error!("Illegal cut: " + cut_expr, 400)

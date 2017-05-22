@@ -132,6 +132,12 @@ describe "Cube API" do
     expect(400).to eq(last_response.status)
   end
 
+  it "should return an error if cutting on a nonexistent member" do
+    get '/cubes/Sales/aggregate?drilldown[]=Time.Month&cut[]=[Customers].[Country].[Uqbar]'
+    expect(400).to eq(last_response.status)
+    expect(last_response.body).to include("Member does not exist")
+  end
+
   it "should return the members' ancestors if 'parents=true' in query string" do
     get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&parents=true'
     r = JSON.parse(last_response.body)
