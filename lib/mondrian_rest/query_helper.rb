@@ -141,7 +141,7 @@ module Mondrian::REST
       cm_names = measure_members.map(&:name)
 
       options['measures'].each { |m|
-        error!("Measure #{m} does not exist in cube #{cube.name}", 404) unless cm_names.include?(m)
+        error!("Measure #{m} does not exist in cube #{cube.name}", 400) unless cm_names.include?(m)
       }
 
       # measures go in axis(0) of the resultset
