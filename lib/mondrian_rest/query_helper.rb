@@ -39,6 +39,11 @@ module Mondrian::REST
           set_members = p.getArgList.map { |id_node|
             get_member(cube, unparse_node(id_node))
           }
+
+          if set_members.any? { |m| m.nil? }
+            error!("Illegal cut. Unknown member in cut set", 400)
+          end
+
           ls = set_members.map(&:raw_level).uniq
           unless ls.size == 1
             error!("Illegal cut: " + cut_expr, 400)
