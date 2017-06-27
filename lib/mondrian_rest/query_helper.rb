@@ -112,7 +112,7 @@ module Mondrian::REST
 
       if s.size > 1
         if s.size == 3 # 3 parts, means that a hierarchy was provided
-          hierarchy = dimension.hierarchies.find { |h_| h_.name == "#{dimension.name}.#{s[1].name}" }
+          hierarchy = dimension.hierarchies.find { |h_| h_.name == s[1].name }
           if hierarchy.nil?
             error!("Hierarchy `#{s[1].name}` does not exist in dimension #{dimension.name}", 404)
           end
