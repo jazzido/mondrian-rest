@@ -62,7 +62,7 @@ describe "Query Builder" do
 
   it "should drilldown on a level of an explicit hierarchy" do
     q = @qh.build_query(@cube, { 'drilldown' => ['Time.Weekly.Week']})
-    expect(q.to_mdx).to eq("SELECT {[Measures].[Unit Sales]} ON COLUMNS,\n[Time.Weekly].[Week].Members ON ROWS\nFROM [Sales]")
+    expect(q.to_mdx).to eq("SELECT {[Measures].[Unit Sales]} ON COLUMNS,\n[Time].[Weekly].[Week].Members ON ROWS\nFROM [Sales]")
   end
 
   it "should drilldown on the second level of a dimension" do
