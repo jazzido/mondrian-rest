@@ -140,7 +140,6 @@ module Mondrian::REST
           end
 
           post do
-            puts params.inspect
             run_from_params(params)
           end
         end
