@@ -21,10 +21,15 @@ module Mondrian::REST
     resource :mdx do
       content_type :xls, "application/vnd.ms-excel"
       formatter :xls, Mondrian::REST::Formatters::XLS
+
       content_type :csv, "text/csv"
       formatter :csv, Mondrian::REST::Formatters::CSV
+
       content_type :json, "application/json"
       formatter :json, Mondrian::REST::Formatters::AggregationJSON
+
+      content_type :jsonrecords, "application/x-jsonrecords"
+      formatter :jsonrecords, Mondrian::REST::Formatters::JSONRecords
 
       desc "Execute an MDX query against a cube"
       content_type :txt, "text/plain"
