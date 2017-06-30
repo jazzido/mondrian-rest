@@ -227,5 +227,17 @@ describe "Cube API" do
       get '/cubes/Warehouse/aggregate.csv?drilldown[]=Top%20Sellers&measures[]=Warehouse%20Profit&nonempty=true'
       expect(CSV.parse(last_response.body).size).to eq(6) # length=5 + header
     end
+
+
+    it "should accept a POST request" do
+      post '/cubes/Sales/aggregate', { 'drilldown' => ['Time.Month', 'Customers.City'], 'measures' => ['Store Sales'], 'parents' => 'true', 'nonempty' => 'true' }
+      rpost = JSON.parse(last_response.body)
+
+      get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&parents=true&nonempty=true'
+      rget = JSON.parse(last_response.body)
+
+      expect(rget['values']).to eql(rpost['values'])
+    end
+
   end
 end

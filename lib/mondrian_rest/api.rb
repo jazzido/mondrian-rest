@@ -37,22 +37,22 @@ module Mondrian::REST
     end
 
     resource :flush do
-        params do
-          requires :secret, type: String, desc: "Secret key"
-        end
-        content_type :json, "application/json"
-        desc "Flush the schema cache"
+      params do
+        requires :secret, type: String, desc: "Secret key"
+      end
+      content_type :json, "application/json"
+      desc "Flush the schema cache"
 
-        get do
-          if ENV['MONDRIAN_REST_SECRET'].nil?
-            error!("Please set MONDRIAN_REST_SECRET to use this endpoint", 403)
-          end
-          if params[:secret] != ENV['MONDRIAN_REST_SECRET']
-            error!("Invalid secret key.", 403)
-          end
-          {
-            'status' => olap_flush
-          }
+      get do
+        if ENV['MONDRIAN_REST_SECRET'].nil?
+          error!("Please set MONDRIAN_REST_SECRET to use this endpoint", 403)
+        end
+        if params[:secret] != ENV['MONDRIAN_REST_SECRET']
+          error!("Invalid secret key.", 403)
+        end
+        {
+          'status' => olap_flush
+        }
       end
     end
 
@@ -78,25 +78,25 @@ module Mondrian::REST
         end
 
         resource :members do
-            desc "return a member by its full name"
-            params do
-              requires :full_name,
-                       type: String,
-                       regexp: /[a-z0-9\.,\-\s%\[\]\(\)]+/i
-            end
-            get do
-              member_full_name = URI.decode(params[:full_name])
+          desc "return a member by its full name"
+          params do
+            requires :full_name,
+                     type: String,
+                     regexp: /[a-z0-9\.,\-\s%\[\]\(\)]+/i
+          end
+          get do
+            member_full_name = URI.decode(params[:full_name])
 
-              m = get_member(get_cube_or_404(params[:cube_name]),
-                             member_full_name)
-              if m.nil?
-                error!("Member `#{member_full_name}` not found in cube `#{params[:cube_name]}`", 404)
-              end
-              m.to_h.merge({
-                             ancestors: m.ancestors.map(&:to_h),
-                             dimension: m.dimension_info
-                           })
+            m = get_member(get_cube_or_404(params[:cube_name]),
+                           member_full_name)
+            if m.nil?
+              error!("Member `#{member_full_name}` not found in cube `#{params[:cube_name]}`", 404)
             end
+            m.to_h.merge({
+                           ancestors: m.ancestors.map(&:to_h),
+                           dimension: m.dimension_info
+                         })
+          end
         end
 
 
@@ -129,18 +129,14 @@ module Mondrian::REST
             optional :properties, type: Array, desc: "Include member properties"
             optional :caption, type: Array, desc: "Replace caption with property", default: []
           end
+
           get do
-            cube = get_cube_or_404(params[:cube_name])
-            query = build_query(cube, params)
-            mdx_query = query.to_mdx
+            run_from_params(params)
+          end
 
-            result = mdx(query.to_mdx)
-            result.mdx = mdx_query if params[:debug]
-            result.properties = params[:properties]
-            result.caption_properties = params[:caption]
-            result.cube = cube
-
-            result
+          post do
+            puts params.inspect
+            run_from_params(params)
           end
         end
 
