@@ -50,6 +50,20 @@ module Mondrian::REST
       end
     end
 
+    def run_from_params(params)
+      cube = get_cube_or_404(params[:cube_name])
+      query = build_query(cube, params)
+      mdx_query = query.to_mdx
+
+      result = mdx(query.to_mdx)
+      result.mdx = mdx_query if params[:debug]
+      result.properties = params[:properties]
+      result.caption_properties = params[:caption]
+      result.cube = cube
+
+      result
+    end
+
     NEST = Mondrian::REST::Nest.new
              .key { |d| d[0] }
              .key { |d| d[1] }

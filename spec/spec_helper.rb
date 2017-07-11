@@ -5,6 +5,9 @@ require 'fileutils'
 require 'rack/test'
 require 'zip'
 
+require 'java'
+java.lang.System.setProperty('mondrian.olap.SsasCompatibleNaming', 'true')
+
 require_relative '../lib/mondrian_rest.rb'
 
 require 'coveralls'

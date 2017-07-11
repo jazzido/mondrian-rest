@@ -20,8 +20,7 @@ describe "Cube API" do
     @app
   end
 
-  describe "metadata" do
-
+  describe "Metadata resources" do
     it "should return a list of cubes" do
       get '/cubes'
       expected = ["Sales 2", "Warehouse", "Sales Ragged", "Store", "HR", "Warehouse and Sales", "Sales"].sort
@@ -82,144 +81,167 @@ describe "Cube API" do
     end
   end
 
+  describe "Aggregation resources" do
+    it "should 404 if measure does not exist" do
+      get '/cubes/Sales/aggregate?measures[]=doesnotexist'
+      expect(last_response.body).to include("does not exist in cube")
+      expect(400).to eq(last_response.status)
+    end
 
-  it "should 404 if measure does not exist" do
-    get '/cubes/Sales/aggregate?measures[]=doesnotexist'
-    expect(404).to eq(last_response.status)
-  end
+    it "should generate a MDX query that aggregates the default measure across the entire cube" do
+      get '/cubes/Sales/aggregate'
+      expect(266773.0).to eq(JSON.parse(last_response.body)['values'][0])
+    end
 
-  it "should generate a MDX query that aggregates the default measure across the entire cube" do
-    get '/cubes/Sales/aggregate'
-    expect(266773.0).to eq(JSON.parse(last_response.body)['values'][0])
-  end
+    it "should aggregate on two dimensions of the Sales cube" do
+      pending "Check what happens here (has to do with mondrian.olap.SsasCompatibleNaming)"
+      get '/cubes/Sales/aggregate?drilldown[]=Product&drilldown[]=Store%20Type&drilldown[]=Time&measures[]=Store%20Sales'
+      exp = [[[[13487.16], [117088.87], [31486.21]],
+              [[3940.54], [33424.17], [8385.53]],
+              [[nil], [nil], [nil]],
+              [[2348.79], [17314.24], [4666.2]],
+              [[1142.61], [10175.3], [2568.47]],
+              [[27917.11], [231033.01], [60259.92]]],
+             [[[nil], [nil], [nil]],
+              [[nil], [nil], [nil]],
+              [[nil], [nil], [nil]],
+              [[nil], [nil], [nil]],
+              [[nil], [nil], [nil]],
+              [[nil], [nil], [nil]]]]
+      expect(exp).to eq(JSON.parse(last_response.body)['values'])
+    end
 
-  it "should aggregate on two dimensions of the Sales cube" do
-    get '/cubes/Sales/aggregate?drilldown[]=Product&drilldown[]=Store%20Type&drilldown[]=Time&measures[]=Store%20Sales'
-    exp = [[[[13487.16], [117088.87], [31486.21]],
-            [[3940.54], [33424.17], [8385.53]],
-            [[nil], [nil], [nil]],
-            [[2348.79], [17314.24], [4666.2]],
-            [[1142.61], [10175.3], [2568.47]],
-            [[27917.11], [231033.01], [60259.92]]],
-           [[[nil], [nil], [nil]],
-            [[nil], [nil], [nil]],
-            [[nil], [nil], [nil]],
-            [[nil], [nil], [nil]],
-            [[nil], [nil], [nil]],
-            [[nil], [nil], [nil]]]]
-    expect(exp).to eq(JSON.parse(last_response.body)['values'])
-  end
+    it "should aggregate on the next level of the dimension in the cut" do
+      get '/cubes/Sales/aggregate?drilldown[]=Product&measures[]=Store%20Sales&cut[]=[Product].[Product%20Family].Drink'
+      puts last_response.body
+      # XXX TODO assertions
+    end
 
-  it "should aggregate on the next level of the dimension in the cut" do
-    get '/cubes/Sales/aggregate?drilldown[]=Product&measures[]=Store%20Sales&cut[]=[Product].[Product%20Family].Drink'
-    puts last_response.body
-    # XXX TODO assertions
-  end
+    it "should cut and drilldown skipping levels correctly" do
+      get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&cut[]=[Customers].[Country].[USA]'
+      exp = ["Altadena", "Arcadia", "Bellflower", "Berkeley", "Beverly Hills", "Burbank", "Burlingame", "Chula Vista", "Colma", "Concord", "Coronado", "Daly City", "Downey", "El Cajon", "Fremont", "Glendale", "Grossmont", "Imperial Beach", "La Jolla", "La Mesa", "Lakewood", "Lemon Grove", "Lincoln Acres", "Long Beach", "Los Angeles", "Mill Valley", "National City", "Newport Beach", "Novato", "Oakland", "Palo Alto", "Pomona", "Redwood City", "Richmond", "San Carlos", "San Diego", "San Francisco", "San Gabriel", "San Jose", "Santa Cruz", "Santa Monica", "Spring Valley", "Torrance", "West Covina", "Woodland Hills", "Albany", "Beaverton", "Corvallis", "Lake Oswego", "Lebanon", "Milwaukie", "Oregon City", "Portland", "Salem", "W. Linn", "Woodburn", "Anacortes", "Ballard", "Bellingham", "Bremerton", "Burien", "Edmonds", "Everett", "Issaquah", "Kirkland", "Lynnwood", "Marysville", "Olympia", "Port Orchard", "Puyallup", "Redmond", "Renton", "Seattle", "Sedro Woolley", "Spokane", "Tacoma", "Walla Walla", "Yakima"]
+      expect(exp).to eq(JSON.parse(last_response.body)['axes'][2]['members'].map { |m| m['caption'] })
+    end
 
-  it "should cut and drilldown skipping levels correctly" do
-    get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&cut[]=[Customers].[Country].[USA]'
-    exp = ["Altadena", "Arcadia", "Bellflower", "Berkeley", "Beverly Hills", "Burbank", "Burlingame", "Chula Vista", "Colma", "Concord", "Coronado", "Daly City", "Downey", "El Cajon", "Fremont", "Glendale", "Grossmont", "Imperial Beach", "La Jolla", "La Mesa", "Lakewood", "Lemon Grove", "Lincoln Acres", "Long Beach", "Los Angeles", "Mill Valley", "National City", "Newport Beach", "Novato", "Oakland", "Palo Alto", "Pomona", "Redwood City", "Richmond", "San Carlos", "San Diego", "San Francisco", "San Gabriel", "San Jose", "Santa Cruz", "Santa Monica", "Spring Valley", "Torrance", "West Covina", "Woodland Hills", "Albany", "Beaverton", "Corvallis", "Lake Oswego", "Lebanon", "Milwaukie", "Oregon City", "Portland", "Salem", "W. Linn", "Woodburn", "Anacortes", "Ballard", "Bellingham", "Bremerton", "Burien", "Edmonds", "Everett", "Issaquah", "Kirkland", "Lynnwood", "Marysville", "Olympia", "Port Orchard", "Puyallup", "Redmond", "Renton", "Seattle", "Sedro Woolley", "Spokane", "Tacoma", "Walla Walla", "Yakima"]
-    expect(exp).to eq(JSON.parse(last_response.body)['axes'][2]['members'].map { |m| m['caption'] })
-  end
+    it "should drilldown on the set union of descendents of the cut" do
+      get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=[Product].[Product Name]&measures[]=Unit%20Sales&cut[]={[Product].[Product Department].[Produce], [Product].[Product Department].[Seafood]}&cut[]=[Time].[Year].[1997]'
+      fnames = JSON.parse(last_response.body)['axes'][2]['members'].map { |m| m['full_name'] }
+      # assert that we only obtained descendants of 'Produce' and 'Seafood'
+      re = /\[([^\]]+)\]/
+      expect(["Produce", "Seafood"]).to eq(fnames.map { |fn| fn.scan(re)[2][0] }.uniq.sort)
+    end
 
-  it "should drilldown on the set union of descendents of the cut" do
-    #get '/cubes/Sales/aggregate?drilldown[]=Time.Year&drilldown[]=Customers.City&measures[]=Store%20Sales&cut[]={[Customers].[Country].[Mexico], [Customers].[Country].[Canada]}'
-    get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=[Product].[Product Name]&measures[]=Unit%20Sales&cut[]={[Product].[Product Department].[Produce], [Product].[Product Department].[Seafood]}&cut[]=[Time].[Year].[1997]'
-    fnames = JSON.parse(last_response.body)['axes'][2]['members'].map { |m| m['full_name'] }
-    # assert that we only obtained descendants of 'Produce' and 'Seafood'
-    re = /\[([^\]]+)\]/
-    expect(["Produce", "Seafood"]).to eq(fnames.map { |fn| fn.scan(re)[2][0] }.uniq.sort)
-  end
+    it "should not allow drilling down on an ascendant" do
+      get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.Country&measures[]=Store%20Sales&cut[]=[Customers].[USA].[OR].[Lake%20Oswego]'
+      expect(400).to eq(last_response.status)
+    end
 
-  it "should not allow drilling down on an ascendant" do
-    get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.Country&measures[]=Store%20Sales&cut[]=[Customers].[USA].[OR].[Lake%20Oswego]'
-    expect(400).to eq(last_response.status)
-  end
+    it "should return an error if cutting on a nonexistent member" do
+      get '/cubes/Sales/aggregate?drilldown[]=Time.Month&cut[]=[Customers].[Country].[Uqbar]'
+      expect(400).to eq(last_response.status)
+      expect(last_response.body).to include("Member does not exist")
+    end
 
-  it "should return the members' ancestors if 'parents=true' in query string" do
-    get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&parents=true'
-    r = JSON.parse(last_response.body)
+    it "should return an error if cutting on a set that contains a nonexistent member" do
+      get '/cubes/Sales/aggregate?drilldown[]=Time.Month&cut[]={[Product].[Product Department].[Produce], [Product].[Product Department].[Does not Exist]}'
+      expect(400).to eq(last_response.status)
+      expect(last_response.body).to include("Unknown member in cut set")
+    end
 
-    r['axes'][1..-1].each { |a|
-      a['members'].each { |m|
-        expect(m['ancestors']).to be_kind_of(Array)
+    it "should return the members' ancestors if 'parents=true' in query string" do
+      get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&parents=true'
+      r = JSON.parse(last_response.body)
+
+      r['axes'][1..-1].each { |a|
+        a['members'].each { |m|
+          expect(m['ancestors']).to be_kind_of(Array)
+        }
       }
-    }
+    end
+
+    it "should not return the members' parent if not specified in the query string" do
+      get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales'
+      r = JSON.parse(last_response.body)
+      expect(r.has_key?('axis_parents')).to be(false)
+    end
+
+    it "should include the generated MDX query in the response if debug=True" do
+      get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&debug=true'
+      r = JSON.parse(last_response.body)
+      expect(r.has_key?('mdx')).to be(true)
+      expect(r['mdx']).to eq("SELECT {[Measures].[Store Sales]} ON COLUMNS,\n[Time].[Month].Members ON ROWS,\n[Customers].[City].Members ON PAGES\nFROM [Sales]")
+    end
+
+    it "should not include the generated MDX in the response if debug not given or if debug=false" do
+      get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales'
+      r = JSON.parse(last_response.body)
+      expect(r.has_key?('mdx')).to be(false)
+
+      get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&debug=false'
+      r = JSON.parse(last_response.body)
+      expect(r.has_key?('mdx')).to be(false)
+    end
+
+    it "should add the parents as columns to the CSV, if requested" do
+      get '/cubes/Sales/aggregate.csv?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&parents=true&nonempty=true'
+      csv = CSV.parse(last_response.body)
+      expect(csv.first).to eq(["ID Year", "Year", "ID Quarter", "Quarter", "ID Month", "Month", "ID Country", "Country", "ID State Province", "State Province", "ID City", "City", "Store Sales"])
+    end
+
+    it "should not add the parents as columns to the CSV by default" do
+      get '/cubes/Sales/aggregate.csv?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&nonempty=true'
+      csv = CSV.parse(last_response.body)
+      expect(csv.first).to eq(["ID Month", "Month", "ID City", "City", "Store Sales"])
+    end
+
+    it "should include member properties if requested" do
+      get '/cubes/HR/aggregate?drilldown[]=Time.Year&drilldown[]=Store.Store%20Name&measures[]=Org%20Salary&properties[]=Store.Store%20Name.Has%20coffee%20bar&properties[]=Store.Store%20Name.Grocery%20Sqft'
+      r = JSON.parse(last_response.body)
+      expect(r['axes'][-1]['members'].map { |m| m['properties'] }).to all(include('Has coffee bar'))
+      expect(r['axes'][-1]['members'].map { |m| m['properties'] }).to all(include('Grocery Sqft'))
+    end
+
+    it "should include member properties in CSV if requested" do
+      get '/cubes/HR/aggregate.csv?drilldown[]=Time.Year&drilldown[]=Store.Store%20Name&measures[]=Org%20Salary&properties[]=Store.Store%20Name.Has%20coffee%20bar&properties[]=Store.Store%20Name.Grocery%20Sqft'
+      csv = CSV.parse(last_response.body)
+      expect(csv.first).to eq(["ID Year", "Year", "ID Store Name", "Store Name", "Has coffee bar", "Grocery Sqft", "Org Salary"])
+    end
+
+    it "should include member properties in CSV when parents are requested" do
+      get '/cubes/HR/aggregate.csv?drilldown[]=Time.Year&drilldown[]=Store.Store%20Name&measures[]=Org%20Salary&properties[]=Store.Store%20Name.Has%20coffee%20bar&properties[]=Store.Store%20Name.Grocery%20Sqft&parents=true'
+      csv = CSV.parse(last_response.body)
+      expect(csv.first).to eq(["ID Year", "Year", "ID Store Country", "Store Country", "ID Store State", "Store State", "ID Store City", "Store City", "ID Store Name", "Store Name", "Has coffee bar", "Grocery Sqft", "Org Salary"])
+    end
+
+    it "should fail if requested member properties of a dimension not in drilldown[]" do
+      get '/cubes/HR/aggregate?drilldown[]=Time.Year&&measures[]=Org%20Salary&properties[]=Store.Store%20Name.Has%20coffee%20bar&properties[]=Store.Store%20Name.Grocery%20Sqft'
+      expect(400).to eq(last_response.status)
+    end
+
+    it "should replace default caption with the `caption` parameter" do
+      get '/cubes/HR/aggregate.csv?drilldown[]=Time.Year&drilldown[]=Store.Store%20Name&measures[]=Org%20Salary&caption[]=Store.Store%20Name.Has%20coffee%20bar'
+      expect(CSV.parse(last_response.body)[1..-1].map { |r| r[3] }).to all(eq('1').or eq('0'))
+    end
+
+    it "should drilldown on a named set" do
+      get '/cubes/Warehouse/aggregate.csv?drilldown[]=Top%20Sellers&measures[]=Warehouse%20Profit&nonempty=true'
+      expect(CSV.parse(last_response.body).size).to eq(6) # length=5 + header
+    end
+
+
+    it "should accept a POST request" do
+      post '/cubes/Sales/aggregate', { 'drilldown' => ['Time.Month', 'Customers.City'], 'measures' => ['Store Sales'], 'parents' => 'true', 'nonempty' => 'true' }
+      rpost = JSON.parse(last_response.body)
+
+      get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&parents=true&nonempty=true'
+      rget = JSON.parse(last_response.body)
+
+      expect(rget['values']).to eql(rpost['values'])
+    end
+
+    it "should filter on an axis according to a criteria" do
+      get '/cubes/Sales/aggregate.csv?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&filter[]=[Measures].[Store Sales]>1000&nonempty=true'
+      puts last_response.body
+    end
   end
-
-  it "should not return the members' parent if not specified in the query string" do
-    get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales'
-    r = JSON.parse(last_response.body)
-    expect(r.has_key?('axis_parents')).to be(false)
-  end
-
-  it "should include the generated MDX query in the response if debug=True" do
-    get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&debug=true'
-    r = JSON.parse(last_response.body)
-    expect(r.has_key?('mdx')).to be(true)
-    expect(r['mdx']).to eq("SELECT {[Measures].[Store Sales]} ON COLUMNS,\n[Time].[Month].Members ON ROWS,\n[Customers].[City].Members ON PAGES\nFROM [Sales]")
-  end
-
-  it "should not include the generated MDX in the response if debug not given or if debug=false" do
-    get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales'
-    r = JSON.parse(last_response.body)
-    expect(r.has_key?('mdx')).to be(false)
-
-    get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&debug=false'
-    r = JSON.parse(last_response.body)
-    expect(r.has_key?('mdx')).to be(false)
-  end
-
-  it "should add the parents as columns to the CSV, if requested" do
-    get '/cubes/Sales/aggregate.csv?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&parents=true&nonempty=true'
-    csv = CSV.parse(last_response.body)
-    expect(csv.first).to eq(["ID Year", "Year", "ID Quarter", "Quarter", "ID Month", "Month", "ID Country", "Country", "ID State Province", "State Province", "ID City", "City", "Store Sales"])
-  end
-
-  it "should not add the parents as columns to the CSV by default" do
-    get '/cubes/Sales/aggregate.csv?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&nonempty=true'
-    csv = CSV.parse(last_response.body)
-    expect(csv.first).to eq(["ID Month", "Month", "ID City", "City", "Store Sales"])
-  end
-
-  it "should include member properties if requested" do
-    get '/cubes/HR/aggregate?drilldown[]=Time.Year&drilldown[]=Store.Store%20Name&measures[]=Org%20Salary&properties[]=Store.Store%20Name.Has%20coffee%20bar&properties[]=Store.Store%20Name.Grocery%20Sqft'
-    r = JSON.parse(last_response.body)
-    expect(r['axes'][-1]['members'].map { |m| m['properties'] }).to all(include('Has coffee bar'))
-    expect(r['axes'][-1]['members'].map { |m| m['properties'] }).to all(include('Grocery Sqft'))
-  end
-
-  it "should include member properties in CSV if requested" do
-    get '/cubes/HR/aggregate.csv?drilldown[]=Time.Year&drilldown[]=Store.Store%20Name&measures[]=Org%20Salary&properties[]=Store.Store%20Name.Has%20coffee%20bar&properties[]=Store.Store%20Name.Grocery%20Sqft'
-    csv = CSV.parse(last_response.body)
-    expect(csv.first).to eq(["ID Year", "Year", "ID Store Name", "Store Name", "Has coffee bar", "Grocery Sqft", "Org Salary"])
-  end
-
-  it "should include member properties in CSV when parents are requested" do
-    get '/cubes/HR/aggregate.csv?drilldown[]=Time.Year&drilldown[]=Store.Store%20Name&measures[]=Org%20Salary&properties[]=Store.Store%20Name.Has%20coffee%20bar&properties[]=Store.Store%20Name.Grocery%20Sqft&parents=true'
-    csv = CSV.parse(last_response.body)
-    expect(csv.first).to eq(["ID Year", "Year", "ID Store Country", "Store Country", "ID Store State", "Store State", "ID Store City", "Store City", "ID Store Name", "Store Name", "Has coffee bar", "Grocery Sqft", "Org Salary"])
-  end
-
-  it "should fail if requested member properties of a dimension not in drilldown[]" do
-    get '/cubes/HR/aggregate?drilldown[]=Time.Year&&measures[]=Org%20Salary&properties[]=Store.Store%20Name.Has%20coffee%20bar&properties[]=Store.Store%20Name.Grocery%20Sqft'
-    expect(400).to eq(last_response.status)
-  end
-
-  it "should replace default caption with the `caption` parameter" do
-    get '/cubes/HR/aggregate.csv?drilldown[]=Time.Year&drilldown[]=Store.Store%20Name&measures[]=Org%20Salary&caption[]=Store.Store%20Name.Has%20coffee%20bar'
-    expect(CSV.parse(last_response.body)[1..-1].map { |r| r[3] }).to all(eq('1').or eq('0'))
-  end
-
-  it "should drilldown on a named set" do
-    get '/cubes/Warehouse/aggregate.csv?drilldown[]=Top%20Sellers&measures[]=Warehouse%20Profit&nonempty=true'
-    expect(CSV.parse(last_response.body).size).to eq(6) # length=5 + header
-  end
-
-  it "should filter on an axis according to a criteria" do
-    get '/cubes/Sales/aggregate.csv?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&filter[1]=[Measures].[Store Sales]>1000&nonempty=true'
-
-    puts last_response.body
-  end
-
 end

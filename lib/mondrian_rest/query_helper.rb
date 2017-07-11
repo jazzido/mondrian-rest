@@ -1,3 +1,4 @@
+# coding: utf-8
 module Mondrian::REST
   module QueryHelper
 
@@ -38,6 +39,11 @@ module Mondrian::REST
           set_members = p.getArgList.map { |id_node|
             get_member(cube, unparse_node(id_node))
           }
+
+          if set_members.any? { |m| m.nil? }
+            error!("Illegal cut. Unknown member in cut set", 400)
+          end
+
           ls = set_members.map(&:raw_level).uniq
           unless ls.size == 1
             error!("Illegal cut: " + cut_expr, 400)
@@ -67,6 +73,11 @@ module Mondrian::REST
         # if `cut_expr` looks like a member, check that it's level is
         # equal to `level`
         m = get_member(cube, cut_expr)
+
+        if m.nil?
+          error!("Illegal cut: #{cut_expr} — Member does not exist", 400)
+        end
+
         { level: m.raw_level, cut: cut_expr, type: :member }
       else
         error!("Illegal cut: " + cut_expr, 400)
@@ -101,7 +112,7 @@ module Mondrian::REST
 
       if s.size > 1
         if s.size == 3 # 3 parts, means that a hierarchy was provided
-          hierarchy = dimension.hierarchies.find { |h_| h_.name == "#{dimension.name}.#{s[1].name}" }
+          hierarchy = dimension.hierarchies.find { |h_| h_.name == s[1].name }
           if hierarchy.nil?
             error!("Hierarchy `#{s[1].name}` does not exist in dimension #{dimension.name}", 404)
           end
@@ -130,7 +141,7 @@ module Mondrian::REST
       cm_names = measure_members.map(&:name)
 
       options['measures'].each { |m|
-        error!("Measure #{m} does not exist in cube #{cube.name}", 404) unless cm_names.include?(m)
+        error!("Measure #{m} does not exist in cube #{cube.name}", 400) unless cm_names.include?(m)
       }
 
       # measures go in axis(0) of the resultset
@@ -175,7 +186,6 @@ module Mondrian::REST
           when :member
             "DESCENDANTS(#{cut[:cut]}, #{qa.full_name})"
           when :set
-            # TODO
             "{" + cut[:set_members].map { |m|
               "DESCENDANTS(#{m.full_name}, #{qa.full_name})"
             }.join(",") + "}"
@@ -188,24 +198,13 @@ module Mondrian::REST
         end
       end
 
-      # parse filters
-      filters = options['filter'].reduce({}) do |h, (axis_idx, filter_expr)|
-        axis_idx = axis_idx.to_i
-        if axis_idx + 1 > query_axes.size
-          error!("There's no axis #{axis_idx}", 400)
-        end
-
-        h[axis_idx] = filter_expr
-        h
-      end
-
       # query axes (drilldown)
       dd.each_with_index do |ds, ds_i|
         query = query.axis(axis_idx,
                            ds)
 
-        if filters.has_key?(ds_i)
-          query = query.filter(filters[ds_i])
+        query = options['filter'].reduce(query) do |q, f|
+          q.filter(f)
         end
 
         if options['distinct']
