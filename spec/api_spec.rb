@@ -94,8 +94,7 @@ describe "Cube API" do
     end
 
     it "should aggregate on two dimensions of the Sales cube" do
-      pending "Check what happens here (has to do with mondrian.olap.SsasCompatibleNaming)"
-      get '/cubes/Sales/aggregate?drilldown[]=Product&drilldown[]=Store%20Type&drilldown[]=Time&measures[]=Store%20Sales'
+      get '/cubes/Sales/aggregate?drilldown[]=[Product].[Product Family]&drilldown[]=[Store%20Type].[Store%20Type]&drilldown[]=[Time].[Year]&measures[]=Store%20Sales'
       exp = [[[[13487.16], [117088.87], [31486.21]],
               [[3940.54], [33424.17], [8385.53]],
               [[nil], [nil], [nil]],
@@ -169,7 +168,7 @@ describe "Cube API" do
       get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&debug=true'
       r = JSON.parse(last_response.body)
       expect(r.has_key?('mdx')).to be(true)
-      expect(r['mdx']).to eq("SELECT {[Measures].[Store Sales]} ON COLUMNS,\n[Time].[Month].Members ON ROWS,\n[Customers].[City].Members ON PAGES\nFROM [Sales]")
+      expect(r['mdx']).to eq("SELECT {[Measures].[Store Sales]} ON COLUMNS,\n[Time].[Time].[Month].Members ON ROWS,\n[Customers].[Customers].[City].Members ON PAGES\nFROM [Sales]")
     end
 
     it "should not include the generated MDX in the response if debug not given or if debug=false" do

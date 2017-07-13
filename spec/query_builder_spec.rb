@@ -57,7 +57,7 @@ describe "Query Builder" do
 
   it "should drilldown on the first level of the time dimension" do
     q = @qh.build_query(@cube, { 'drilldown' => ['Time']})
-    expect(q.to_mdx).to eq("SELECT {[Measures].[Unit Sales]} ON COLUMNS,\n[Time].[Year].Members ON ROWS\nFROM [Sales]")
+    expect(q.to_mdx).to eq("SELECT {[Measures].[Unit Sales]} ON COLUMNS,\n[Time].[Time].[Year].Members ON ROWS\nFROM [Sales]")
   end
 
   it "should drilldown on a level of an explicit hierarchy" do
@@ -67,7 +67,7 @@ describe "Query Builder" do
 
   it "should drilldown on the second level of a dimension" do
     q = @qh.build_query(@cube, { 'drilldown' => ['Product.Product Category']})
-    expect(q.to_mdx).to eq("SELECT {[Measures].[Unit Sales]} ON COLUMNS,\n[Product].[Product Category].Members ON ROWS\nFROM [Sales]")
+    expect(q.to_mdx).to eq("SELECT {[Measures].[Unit Sales]} ON COLUMNS,\n[Product].[Product].[Product Category].Members ON ROWS\nFROM [Sales]")
   end
 
   it "should cut on the provided cell" do
@@ -76,7 +76,7 @@ describe "Query Builder" do
                           'drilldown' => ['Product.Product Category'],
                           'cut' => ['Time.Year.1997']
                         })
-    expect(q.to_mdx).to eq("SELECT {[Measures].[Unit Sales]} ON COLUMNS,\n[Product].[Product Category].Members ON ROWS\nFROM [Sales]\nWHERE (Time.Year.1997)")
+    expect(q.to_mdx).to eq("SELECT {[Measures].[Unit Sales]} ON COLUMNS,\n[Product].[Product].[Product Category].Members ON ROWS\nFROM [Sales]\nWHERE (Time.Year.1997)")
   end
 
   it "should aggregate on the next level of the dimension in the cut" do
@@ -97,7 +97,7 @@ describe "Query Builder" do
     # likely this is invalid MDX, but mondrian will rewrite it as
     # ... WHERE ({Time.Year.1997} * {[Store Type].[Supermarket]})
     # ie. cross join of sets of cardinality = 1
-    expect(q.to_mdx).to eq("SELECT {[Measures].[Unit Sales]} ON COLUMNS,\n[Product].[Product Category].Members ON ROWS\nFROM [Sales]\nWHERE (Time.Year.1997 * [Store Type].[Supermarket])")
+    expect(q.to_mdx).to eq("SELECT {[Measures].[Unit Sales]} ON COLUMNS,\n[Product].[Product].[Product Category].Members ON ROWS\nFROM [Sales]\nWHERE (Time.Year.1997 * [Store Type].[Supermarket])")
   end
 
   it "should slice on a crossjoin of the sets provided in the cut" do
@@ -106,7 +106,7 @@ describe "Query Builder" do
                           'drilldown' => ['Product.Product Category'],
                           'cut' => ['Time.Year.1997', '{[Store Type].[Supermarket], [Store Type].[Deluxe Supermarket]}']
                         })
-    expect(q.to_mdx).to eq("SELECT {[Measures].[Unit Sales]} ON COLUMNS,\n[Product].[Product Category].Members ON ROWS\nFROM [Sales]\nWHERE (Time.Year.1997 * {[Store Type].[Supermarket], [Store Type].[Deluxe Supermarket]})")
+    expect(q.to_mdx).to eq("SELECT {[Measures].[Unit Sales]} ON COLUMNS,\n[Product].[Product].[Product Category].Members ON ROWS\nFROM [Sales]\nWHERE (Time.Year.1997 * {[Store Type].[Supermarket], [Store Type].[Deluxe Supermarket]})")
   end
 
   it "should drilldown on the descendants if drilling down on a higher level than the cut" do

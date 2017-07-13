@@ -8,6 +8,8 @@ See [`mondrian-rest-demo`](https://github.com/jazzido/mondrian-rest-demo) and [`
 
 [`mondrian-rest-ui`](https://github.com/jazzido/mondrian-rest-ui) is an experimental visualization tool for `mondrian-rest`, inspired by [CubesViewer](https://github.com/jjmontesl/cubesviewer) and [Polestar](https://github.com/vega/polestar).
 
+*NOTE*: `mondrian-rest` expect the `mondrian.olap.SsasCompatibleNaming` Java property is set to `true`. Set a environment variable `JAVA_OPTS="-Dmondrian.olap.SsasCompatibleNaming=true""` to the process that uses `mondrian-rest`.
+
 ## Credits
 
 Initial inspiration for this project came from [Stefan Urbanek](https://github.com/Stiivi)'s [`cubes`](http://cubes.databrewery.org/) OLAP server. `mondrian-rest` uses [Raimonds Simanovskis](https://github.com/rsim)'s fantastic [`mondrian-olap`](https://github.com/rsim/mondrian-olap) library.

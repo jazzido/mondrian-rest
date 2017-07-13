@@ -195,7 +195,7 @@ module Mondrian::REST
             raise "Unsupported operation"
           end
         else
-          qa.raw_level.unique_name + '.Members'
+          qa.unique_name + '.Members'
         end
       end
 

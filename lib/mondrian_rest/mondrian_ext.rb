@@ -102,6 +102,10 @@ module Mondrian
       end
     end
 
+    class Hierarchy
+      attr_reader :dimension
+    end
+
     INTERNAL_PROPS = Set.new(['CATALOG_NAME', 'SCHEMA_NAME', 'CUBE_NAME', 'DIMENSION_UNIQUE_NAME', 'HIERARCHY_UNIQUE_NAME', 'LEVEL_UNIQUE_NAME', 'LEVEL_NUMBER', 'MEMBER_ORDINAL', 'MEMBER_NAME', 'MEMBER_UNIQUE_NAME', 'MEMBER_TYPE', 'MEMBER_GUID', 'MEMBER_CAPTION', 'CHILDREN_CARDINALITY', 'PARENT_LEVEL', 'PARENT_UNIQUE_NAME', 'PARENT_COUNT', 'DESCRIPTION', '$visible', 'MEMBER_KEY', 'IS_PLACEHOLDERMEMBER', 'IS_DATAMEMBER', 'DEPTH', 'DISPLAY_INFO', 'VALUE', '$scenario', 'CELL_FORMATTER', 'CELL_FORMATTER_SCRIPT', 'CELL_FORMATTER_SCRIPT_LANGUAGE', 'DISPLAY_FOLDER', 'FORMAT_EXP', 'KEY', '$name']).freeze
 
     class Level
@@ -109,6 +113,10 @@ module Mondrian
 
       def full_name
         @full_name ||= @raw_level.getUniqueName
+      end
+
+      def unique_name
+        "#{Java::MondrianOlap::Util.quoteMdxIdentifier(hierarchy.dimension.name)}.#{Java::MondrianOlap::Util.quoteMdxIdentifier(hierarchy.name)}.#{Java::MondrianOlap::Util.quoteMdxIdentifier(self.name)}"
       end
 
       def to_h(member_properties=[])
