@@ -180,7 +180,7 @@ module Mondrian::REST
                       error!("level #{params[:level_name]} not found in dimension #{params[:dimension_name]}")
                     end
 
-                    level.to_h(params[:member_properties])
+                    level.to_h(params[:member_properties], params[:children])
                   end
 
                   route_param :member_key,
