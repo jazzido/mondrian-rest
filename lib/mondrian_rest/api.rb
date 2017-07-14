@@ -164,6 +164,7 @@ module Mondrian::REST
 
                   params do
                     optional :member_properties, type: Array, default: []
+                    optional :children, type: Boolean, default: false
                   end
 
                   get do

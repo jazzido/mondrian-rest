@@ -62,6 +62,14 @@ describe "Cube API" do
       expect(res['members'].map { |m| m['properties' ]}).to all(have_key('Street address').and have_key('Has coffee bar'))
     end
 
+    it "should return the members of a dimension level along with their children" do
+      get '/cubes/Sales/dimensions/Store/levels/Store%20City/members?children=true'
+      #res = JSON.parse(last_response.body)
+      #puts res.inspect
+      puts last_response.body
+    end
+
+
     it "should return a member" do
       get '/cubes/Sales%202/dimensions/Product/levels/Product%20Family/members/Drink'
       m = JSON.parse(last_response.body)
@@ -71,7 +79,7 @@ describe "Cube API" do
 
     it "should return a member by full name" do
       get '/cubes/Sales%202/members?full_name=%5BProduct%5D.%5BDrink%5D'
-      expected = {"name"=>"Drink", "full_name"=>"[Product].[Drink]", "caption"=>"Drink", "all_member?"=>false, "drillable?"=>true, "depth"=>1, "key"=>"Drink", "level_name" => "Product Family", "num_children"=>3, "parent_name"=>"[Product].[All Products]", "ancestors"=>[{"name"=>"All Products", "full_name"=>"[Product].[All Products]", "caption"=>"All Products", "all_member?"=>true, "drillable?"=>true, "depth"=>0, "key"=>0, "num_children"=>3, "parent_name"=>nil, "level_name"=>"(All)"}], "dimension"=>{"name"=>"Product", "caption"=>"Product", "type"=>"standard", "level"=>"Product Family", "level_depth"=>1}}
+      expected = {"name"=>"Drink", "full_name"=>"[Product].[Drink]", "caption"=>"Drink", "children" => [], "all_member?"=>false, "drillable?"=>true, "depth"=>1, "key"=>"Drink", "level_name" => "Product Family", "num_children"=>3, "parent_name"=>"[Product].[All Products]", "ancestors"=>[{"name"=>"All Products", "full_name"=>"[Product].[All Products]", "caption"=>"All Products", "all_member?"=>true, "drillable?"=>true, "depth"=>0, "key"=>0, "num_children"=>3, "parent_name"=>nil, "level_name"=>"(All)", "children" => []}], "dimension"=>{"name"=>"Product", "caption"=>"Product", "type"=>"standard", "level"=>"Product Family", "level_depth"=>1}}
       expect(JSON.parse(last_response.body)).to eq(expected)
     end
 

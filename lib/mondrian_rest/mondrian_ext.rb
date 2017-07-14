@@ -119,13 +119,13 @@ module Mondrian
         "#{Java::MondrianOlap::Util.quoteMdxIdentifier(hierarchy.dimension.name)}.#{Java::MondrianOlap::Util.quoteMdxIdentifier(hierarchy.name)}.#{Java::MondrianOlap::Util.quoteMdxIdentifier(self.name)}"
       end
 
-      def to_h(member_properties=[])
+      def to_h(member_properties=[], get_children=false)
         {
           name: self.name,
           caption: self.caption,
           members: self.members
             .uniq { |m| m.property_value('MEMBER_KEY') }
-            .map { |m| m.to_h(member_properties) },
+            .map { |m| m.to_h(member_properties, nil, get_children) },
           :properties => self.own_props.map { |p|
             p.getName
           }
@@ -148,7 +148,7 @@ module Mondrian
         @raw_member.getLevel
       end
 
-      def to_h(properties=[], caption_property=nil)
+      def to_h(properties=[], caption_property=nil, get_children=false)
         kv = [:name, :full_name, :all_member?,
               :drillable?, :depth].map { |m|
           [m, self.send(m)]
@@ -158,6 +158,7 @@ module Mondrian
         kv << [:num_children, self.property_value('CHILDREN_CARDINALITY')]
         kv << [:parent_name, self.property_value('PARENT_UNIQUE_NAME')]
         kv << [:level_name, self.raw_level.name]
+        kv << [:children, get_children ? self.children.map { |c| c.to_h([], nil, get_children)} : []]
 
         if properties.size > 0
           kv << [
