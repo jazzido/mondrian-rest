@@ -3,9 +3,10 @@ require 'csv'
 module Mondrian::REST::Formatters
   module CSV
     def self.call(result, env)
-      add_parents = env['rack.request.query_hash']['parents'] == 'true'
-      debug = env['rack.request.query_hash']['debug'] == 'true'
-      properties = env['rack.request.query_hash']['properties'] || []
+      qh = env['rack.request.query_hash']
+      add_parents = qh['parents'] == 'true'
+      debug = qh['debug'] == 'true'
+      properties = qh['properties'] || []
 
       rows = Mondrian::REST::Formatters.tidy(result,
                                              add_parents: add_parents,
