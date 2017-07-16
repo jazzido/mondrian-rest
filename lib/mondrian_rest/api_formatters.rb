@@ -1,81 +1,11 @@
-require 'csv'
-require 'writeexcel'
+require_relative './formatters/aggregation_json'
+require_relative './formatters/csv'
+require_relative './formatters/excel'
+require_relative './formatters/jsonrecords'
+require_relative './formatters/jsonstat'
+
 
 module Mondrian::REST::Formatters
-
-  module AggregationJSON
-    def self.call(result, env)
-      add_parents = env['rack.request.query_hash']['parents'] == 'true'
-      debug = env['rack.request.query_hash']['debug'] == 'true'
-
-      result.to_h(add_parents, debug).to_json
-    end
-  end
-
-  module XLS
-    def self.call(result, env)
-      add_parents = env['rack.request.query_hash']['parents'] == 'true'
-      debug = env['rack.request.query_hash']['debug'] == 'true'
-      properties = env['rack.request.query_hash']['properties'] || []
-
-      out = StringIO.new
-      book = WriteExcel.new(out)
-      sheet = book.add_worksheet
-
-      Mondrian::REST::Formatters
-        .tidy(result,
-              add_parents: add_parents,
-              debug: debug,
-              properties: properties)
-        .each_with_index do |row, i|
-          row.each_with_index { |cell, j|
-            sheet.write(i, j, cell)
-          }
-      end
-
-      book.close
-      out.string
-    end
-  end
-
-  module CSV
-    def self.call(result, env)
-      add_parents = env['rack.request.query_hash']['parents'] == 'true'
-      debug = env['rack.request.query_hash']['debug'] == 'true'
-      properties = env['rack.request.query_hash']['properties'] || []
-
-      rows = Mondrian::REST::Formatters.tidy(result,
-                                             add_parents: add_parents,
-                                             debug: debug,
-                                             properties: properties)
-
-      ::CSV.generate do |csv|
-        rows.each { |row| csv << row }
-      end
-    end
-  end
-
-  module JSONRecords
-    def self.call(result, env)
-      add_parents = env['rack.request.query_hash']['parents'] == 'true'
-      debug = env['rack.request.query_hash']['debug'] == 'true'
-      properties = env['rack.request.query_hash']['properties'] || []
-
-      rows = Mondrian::REST::Formatters.tidy(result,
-                                             add_parents: add_parents,
-                                             debug: debug,
-                                             properties: properties).lazy
-      keys = rows.next
-
-      {
-        data: rows.with_index.with_object([]) { |(row, i), data|
-          next if i == 0
-          data << Hash[keys.zip(row)]
-        }
-      }.to_json
-
-    end
-  end
 
   ##
   # Generate 'tidy data' (http://vita.had.co.nz/papers/tidy-data.pdf)
