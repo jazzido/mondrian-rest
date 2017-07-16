@@ -17,7 +17,7 @@ module Mondrian::REST::Formatters
       builder = Java::NoSsbJsonstatV2::Dataset
                   .create
                   .withLabel('Aggregation: ')
-                  .withSource(env['REQUEST_URI'])
+                  .withSource(env['REQUEST_URI'] || '')
 
       dimensions = rdims.map.with_index do |d, i|
         dim = Java::NoSsbJsonstatV2::Dimension
