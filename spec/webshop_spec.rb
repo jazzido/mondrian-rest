@@ -63,4 +63,13 @@ describe "Webshop" do
     expect(JSON.parse(last_response.body)['data'].map(&:keys)).to all(eq(keys))
   end
 
+  it "should drilldown by country, month, and product category and return JSON-Stat" do
+    header 'Accept', 'application/x-jsonstat'
+    get '/cubes/Sales/aggregate?drilldown[]=Country&drilldown[]=Date.Month&drilldown[]=Product.Category&measures[]=Price%20Total&measures[]=Quantity'
+
+    # TODO Add assertions
+    puts last_response.body
+  end
+
+
 end

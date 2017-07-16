@@ -12,11 +12,14 @@ module Mondrian::REST::Formatters
       mapper.registerModule(Java::ComFasterxmlJacksonDatatypeGuava::GuavaModule.new.configureAbsentsAsNulls(false))
 
       rs = result.to_h
-      nax = rs[:axis_dimensions].size
+      rdims = rs[:axis_dimensions].reverse
 
-      builder = Java::NoSsbJsonstatV2::Dataset.create.withLabel('Aggregation')
+      builder = Java::NoSsbJsonstatV2::Dataset
+                  .create
+                  .withLabel('Aggregation: ')
+                  .withSource(env['REQUEST_URI'])
 
-      dimensions = rs[:axis_dimensions].reverse.map.with_index do |d, i|
+      dimensions = rdims.map.with_index do |d, i|
         dim = Java::NoSsbJsonstatV2::Dimension
                 .create(d[:name])
 
