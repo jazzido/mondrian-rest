@@ -2,6 +2,8 @@ require 'json'
 
 Java::JavaLang::System.setProperty("jdbc.driver.autoload", "true")
 
+require_relative './jars/mondrian-rest_jars.rb'
+
 require 'mondrian-olap'
 require 'grape'
 
