@@ -12,12 +12,15 @@ Gem::Specification.new do |s|
   s.platform = 'java'
 
   s.files         = `git ls-files`.split("\n").reject { |f| f =~ /^spec\// }
-  s.require_paths = ["lib"]
+  s.require_paths = ["lib", "lib/jars"]
+
+  s.requirements << 'jar no.ssb.jsonstat:json-stat-java, 0.2.2'
 
   s.add_runtime_dependency 'mondrian-olap', ["~> 0.8.0"]
   s.add_runtime_dependency 'grape', ["~> 0.19.0"]
   s.add_runtime_dependency 'writeexcel', '~> 1.0', '>= 1.0.5'
 
+  s.add_development_dependency "jar-dependencies", "~> 0.3.2"
   s.add_development_dependency 'rake'
   s.add_development_dependency 'rspec'
   s.add_development_dependency 'jdbc-derby'
