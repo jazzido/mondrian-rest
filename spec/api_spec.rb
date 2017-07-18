@@ -62,6 +62,14 @@ describe "Cube API" do
       expect(res['members'].map { |m| m['properties' ]}).to all(have_key('Street address').and have_key('Has coffee bar'))
     end
 
+
+    it "should return the members of a dimension level and replace their caption with the requested property" do
+      get '/cubes/Sales/dimensions/Store/levels/Store%20Name/members?member_properties[]=Street%20address&member_properties[]=Has%20coffee%20bar&caption=Street%20address'
+      res = JSON.parse(last_response.body)
+
+      expect(res['members'].map { |m| m['properties']['Street address'] == m['caption'] }).to all(be true)
+    end
+
     it "should return the members of a dimension level along with their children" do
       get '/cubes/Sales/dimensions/Store/levels/Store%20City/members?children=true'
       #res = JSON.parse(last_response.body)

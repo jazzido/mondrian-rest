@@ -119,13 +119,13 @@ module Mondrian
         "#{Java::MondrianOlap::Util.quoteMdxIdentifier(hierarchy.dimension.name)}.#{Java::MondrianOlap::Util.quoteMdxIdentifier(hierarchy.name)}.#{Java::MondrianOlap::Util.quoteMdxIdentifier(self.name)}"
       end
 
-      def to_h(member_properties=[], get_children=false)
+      def to_h(member_properties=[], get_children=false, member_caption=nil)
         {
           name: self.name,
           caption: self.caption,
           members: self.members
             .uniq { |m| m.property_value('MEMBER_KEY') }
-            .map { |m| m.to_h(member_properties, nil, get_children) },
+            .map { |m| m.to_h(member_properties, member_caption, get_children) },
           :properties => self.own_props.map { |p|
             p.getName
           }

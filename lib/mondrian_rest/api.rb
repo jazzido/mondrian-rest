@@ -164,6 +164,7 @@ module Mondrian::REST
 
                   params do
                     optional :member_properties, type: Array, default: []
+                    optional :caption, type: String, desc: "Replace caption with property", default: nil
                     optional :children, type: Boolean, default: false
                   end
 
@@ -180,7 +181,7 @@ module Mondrian::REST
                       error!("level #{params[:level_name]} not found in dimension #{params[:dimension_name]}")
                     end
 
-                    level.to_h(params[:member_properties], params[:children])
+                    level.to_h(params[:member_properties], params[:children], params[:caption])
                   end
 
                   route_param :member_key,
