@@ -72,9 +72,8 @@ describe "Cube API" do
 
     it "should return the members of a dimension level along with their children" do
       get '/cubes/Sales/dimensions/Store/levels/Store%20City/members?children=true'
-      #res = JSON.parse(last_response.body)
-      #puts res.inspect
-      puts last_response.body
+      res = JSON.parse(last_response.body)
+      # TODO add assertions
     end
 
 
@@ -83,6 +82,15 @@ describe "Cube API" do
       m = JSON.parse(last_response.body)
       expect(m['name']).to eq('Drink')
       expect(m['full_name']).to eq('[Product].[Drink]')
+    end
+
+    it "should return a member and replace its caption with the requested property, and fetch requested properties" do
+      get '/cubes/Sales/dimensions/Store/levels/Store%20Name/members/Store%208?member_properties[]=Street%20address&member_properties[]=Has%20coffee%20bar&caption=Street%20address'
+      res = JSON.parse(last_response.body)
+
+      expect(res['properties']).to have_key('Street address').and have_key('Has coffee bar')
+      expect(res['caption']).to eq(res['properties']['Street address'])
+
     end
 
     it "should return a member by full name" do

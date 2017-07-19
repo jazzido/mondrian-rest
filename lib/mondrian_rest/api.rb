@@ -189,8 +189,16 @@ module Mondrian::REST
 
                   route_param :member_key,
                               type: String,
-                              requirements: { member_key: /[a-z0-9\.\-\s]+/i } do
+                              requirements: { member_key: /[A-Za-z0-9\.\-\s%]+/i } do
+
+                    params do
+                      optional :caption, type: String, desc: "Replace caption with property", default: nil
+                      optional :member_properties, type: Array, default: []
+                      optional :children, type: Boolean, default: false
+                    end
+
                     get do
+                      puts params.inspect
                       cube = get_cube_or_404(params[:cube_name])
                       dimension = cube.dimension(params[:dimension_name])
                       level = dimension.hierarchies[0].level(params[:level_name])
@@ -199,7 +207,9 @@ module Mondrian::REST
                         m.property_value('MEMBER_KEY').to_s == params[:member_key]
                       }
                       error!('member not found', 404) if member.nil?
-                      member.to_h.merge({ancestors: member.ancestors.map(&:to_h)})
+                      member
+                        .to_h(params[:member_properties], params[:caption], params[:children])
+                        .merge({ancestors: member.ancestors.map(&:to_h)})
                     end
                   end
                 end
