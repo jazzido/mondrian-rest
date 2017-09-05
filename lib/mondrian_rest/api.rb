@@ -33,10 +33,18 @@ module Mondrian::REST
 
       desc "Execute an MDX query against a cube"
       content_type :txt, "text/plain"
+
+      params do
+        optional :parents, type: Boolean, desc: "Include members' ancestors"
+        optional :debug, type: Boolean, desc: "Include generated MDX", default: false
+        optional :properties, type: Array, desc: "Include member properties"
+        optional :caption, type: Array, desc: "Replace caption with property", default: []
+      end
+
       post do
         status 200
 
-        rbody = env['api.request.body'].force_encoding('utf-8')
+        rbody = request.body.read.force_encoding('utf-8')
         mdx(rbody)
       end
     end
@@ -198,7 +206,6 @@ module Mondrian::REST
                     end
 
                     get do
-                      puts params.inspect
                       cube = get_cube_or_404(params[:cube_name])
                       dimension = cube.dimension(params[:dimension_name])
                       level = dimension.hierarchies[0].level(params[:level_name])

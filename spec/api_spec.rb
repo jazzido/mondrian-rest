@@ -262,5 +262,20 @@ describe "Cube API" do
       expect(rget['values']).to eql(rpost['values'])
     end
 
+    it "should add parents to the result of a raw MDX query" do
+      mdx = <<-MDX
+        SELECT {[Measures].[Store Sales]} ON COLUMNS,
+               TOPCOUNT(Time.Time.Month.Members, 10, [Measures].[Store Sales]) ON ROWS,
+               [Customers].[Customers].[City].Members ON PAGES
+        FROM [Sales]
+      MDX
+
+      post '/mdx.csv?parents=true', mdx
+
+      csv = CSV.parse(last_response.body)
+      expect(csv.first).to eq(["ID Year","Year","ID Quarter","Quarter","ID Month","Month","ID Country","Country","ID State Province","State Province","ID City","City","Store Sales"])
+
+    end
   end
 end
+

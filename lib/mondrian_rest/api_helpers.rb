@@ -44,6 +44,11 @@ module Mondrian::REST
       logger.info("Executing MDX query #{query}")
       begin
         result = olap.execute query
+        result.mdx = query if params[:debug]
+        result.properties = params[:properties]
+        result.caption_properties = params[:caption] 
+        result.cube = Mondrian::OLAP::Cube.new(olap,
+                                               olap.raw_connection.prepareOlapStatement(query).getCube)
         return result
       rescue Mondrian::OLAP::Error => st
         error!({error: st.backtrace}, 400)
@@ -56,11 +61,7 @@ module Mondrian::REST
       mdx_query = query.to_mdx
 
       result = mdx(query.to_mdx)
-      result.mdx = mdx_query if params[:debug]
-      result.properties = params[:properties]
-      result.caption_properties = params[:caption]
       result.cube = cube
-
       result
     end
 
