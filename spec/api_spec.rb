@@ -224,6 +224,15 @@ describe "Cube API" do
       expect(r['axes'][-1]['members'].map { |m| m['properties'] }).to all(include('Grocery Sqft'))
     end
 
+    it "should include member properties if requested, with format Dimension.Hierarchy.Level.Property" do
+      get '/cubes/HR/aggregate?drilldown[]=Time.Year&drilldown[]=Store.Store%20Name&measures[]=Org%20Salary&properties[]=Store.Store.Store%20Name.Has%20coffee%20bar&properties[]=Store.Store.Store%20Name.Grocery%20Sqft'
+      r = JSON.parse(last_response.body)
+      puts r.inspect
+      expect(r['axes'][-1]['members'].map { |m| m['properties'] }).to all(include('Has coffee bar'))
+      expect(r['axes'][-1]['members'].map { |m| m['properties'] }).to all(include('Grocery Sqft'))
+    end
+
+
     it "should include member properties in CSV if requested" do
       get '/cubes/HR/aggregate.csv?drilldown[]=Time.Year&drilldown[]=Store.Store%20Name&measures[]=Org%20Salary&properties[]=Store.Store%20Name.Has%20coffee%20bar&properties[]=Store.Store%20Name.Grocery%20Sqft'
       csv = CSV.parse(last_response.body)
@@ -245,6 +254,12 @@ describe "Cube API" do
       get '/cubes/HR/aggregate.csv?drilldown[]=Time.Year&drilldown[]=Store.Store%20Name&measures[]=Org%20Salary&caption[]=Store.Store%20Name.Has%20coffee%20bar'
       expect(CSV.parse(last_response.body)[1..-1].map { |r| r[3] }).to all(eq('1').or eq('0'))
     end
+
+    it "should replace default caption with the `caption` parameter when caption is in format Dimension.Hierarchy.Level.Property" do
+      get '/cubes/HR/aggregate.csv?drilldown[]=Time.Year&drilldown[]=Store.Store%20Name&measures[]=Org%20Salary&caption[]=Store.Store.Store%20Name.Has%20coffee%20bar'
+      expect(CSV.parse(last_response.body)[1..-1].map { |r| r[3] }).to all(eq('1').or eq('0'))
+    end
+
 
     it "should drilldown on a named set" do
       get '/cubes/Warehouse/aggregate.csv?drilldown[]=Top%20Sellers&measures[]=Warehouse%20Profit&nonempty=true'
