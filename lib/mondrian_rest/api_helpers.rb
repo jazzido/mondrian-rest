@@ -75,8 +75,11 @@ module Mondrian::REST
       end
 
       NEST.map(cprops.map { |cp|
-                 org.olap4j.mdx.IdentifierNode.parseIdentifier(cp).getSegmentList.to_a.map(&:name)
-             })
+                 names = org.olap4j.mdx.IdentifierNode.parseIdentifier(cp).getSegmentList.to_a.map(&:name)
+                 # IF prop in Dim.Hier.Lvl.Prop format, skip names[1]
+                 names.size == 4 ? [names[0], names[2], names[3]] : names
+               })
+
     end
 
     ##
@@ -86,7 +89,9 @@ module Mondrian::REST
     def self.parse_properties(properties, dimensions)
       properties.map { |p|
         sl = org.olap4j.mdx.IdentifierNode.parseIdentifier(p).getSegmentList.to_a
-        if sl.size != 3
+        slsize = sl.size
+
+        if slsize != 3 and slsize != 4
           raise PropertyError, "Properties must be in the form `Dimension.Level.Property Name`"
         end
 
@@ -96,9 +101,11 @@ module Mondrian::REST
         end
 
         sl.map(&:name)
-      }.group_by(&:first)
-        .reduce({}) { |h, (k,v)|
-        h[k] = Hash[v.group_by { |x| x[1] }.map { |k1, v1| [k1, v1.map(&:last)] }]
+      }
+            .group_by(&:first)
+            .reduce({}) { |h, (k,v)|
+        h[k] = Hash[v.group_by { |x| x.size == 4 ? x[2] : x[1] }
+                      .map { |k1, v1| [k1, v1.map(&:last)] }]
         h
       }
     end
