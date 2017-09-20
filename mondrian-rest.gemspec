@@ -1,7 +1,7 @@
 # coding: utf-8
 Gem::Specification.new do |s|
   s.name        = "mondrian-rest"
-  s.version     = '0.7.1'
+  s.version     = '0.7.2'
   s.authors     = ["Manuel Aristarán"]
   s.email       = ["manuel@jazzido.com"]
   s.homepage    = "https://github.com/jazzido/mondrian-rest"
