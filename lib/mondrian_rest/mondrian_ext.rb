@@ -210,7 +210,7 @@ module Mondrian
         # return the contents of the filter axis
         # puts self.raw_cell_set.getFilterAxis.inspect
 
-        dimensions = self.axis_members.map { |am| am.first.dimension_info }
+        dimensions = self.axis_members.map { |am| am.first ? am.first.dimension_info : nil }
 
         pprops = unless self.properties.nil?
                    Mondrian::REST::APIHelpers.parse_properties(self.properties,

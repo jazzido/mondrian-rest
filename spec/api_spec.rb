@@ -291,6 +291,14 @@ describe "Cube API" do
       expect(csv.first).to eq(["ID Year","Year","ID Quarter","Quarter","ID Month","Month","ID Country","Country","ID State Province","State Province","ID City","City","Store Sales"])
 
     end
+
+    it "should not fail on an empty result" do
+      get '/cubes/Warehouse/aggregate?drilldown[]=[Store+Type].[Store+Type]&cut[]=[Store].[Store].[Store+Country].%26[Mexico]&measures[]=Store+Invoice&nonempty=true&distinct=false&parents=false&debug=true'
+
+      expect(JSON.parse(last_response.body)['values'].size).to eql(0)
+
+    end
+
   end
 end
 
