@@ -297,8 +297,14 @@ describe "Cube API" do
 
       expect(JSON.parse(last_response.body)['values'].size).to eql(0)
 
-    end
+      get '/cubes/Warehouse/aggregate.jsonrecords?drilldown[]=[Store+Type].[Store+Type]&cut[]=[Store].[Store].[Store+Country].%26[Mexico]&measures[]=Store+Invoice&nonempty=true&distinct=false&parents=false&debug=true'
 
+      expect(JSON.parse(last_response.body)).to eql({"data" => []})
+
+      get '/cubes/Warehouse/aggregate.csv?drilldown[]=[Store+Type].[Store+Type]&cut[]=[Store].[Store].[Store+Country].%26[Mexico]&measures[]=Store+Invoice&nonempty=true&distinct=false&parents=false&debug=true'
+
+      expect(last_response.body).to eql("")
+    end
   end
 end
 

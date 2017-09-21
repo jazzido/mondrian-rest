@@ -11,11 +11,17 @@ module Mondrian::REST::Formatters
   # Generate 'tidy data' (http://vita.had.co.nz/papers/tidy-data.pdf)
   # from a result set.
   def self.tidy(result, options)
+
     cube = result.cube
 
     add_parents = options[:add_parents]
     properties = options[:properties]
     rs = result.to_h(add_parents, options[:debug])
+
+    if rs[:values].empty?
+      return []
+    end
+
     measures = rs[:axes].first[:members]
     dimensions = rs[:axis_dimensions][1..-1]
     columns = []
