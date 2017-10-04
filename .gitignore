@@ -1,1 +1,4 @@
 .DS_Store
+*.log
+spec/fixtures/foodmart/
+spec/fixtures/webshop.sqlite
