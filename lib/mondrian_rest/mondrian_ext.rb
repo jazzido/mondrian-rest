@@ -80,7 +80,8 @@ module Mondrian
               :name => m.name,
               :caption => m.caption,
               :annotations => m.annotations,
-              :full_name => m.full_name
+              :full_name => m.full_name,
+              :aggregator => m.raw_member.getAggregator
             }
           end
         }

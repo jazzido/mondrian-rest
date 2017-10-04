@@ -32,6 +32,7 @@ describe "Cube API" do
       cube = JSON.parse(last_response.body)
       expect(cube['name']).to eq('Sales 2')
       expect(cube['dimensions'].map { |d| d['name'] }).to eq(['Time', 'Product', 'Gender'])
+      expect(cube['measures'].map { |m| m['aggregator'] }).to eq(['COUNT', 'SUM', 'SUM', 'SUM', 'UNKNOWN', 'UNKNOWN'])
     end
 
     it "should return named sets in the definition of a cube" do
@@ -227,7 +228,6 @@ describe "Cube API" do
     it "should include member properties if requested, with format Dimension.Hierarchy.Level.Property" do
       get '/cubes/HR/aggregate?drilldown[]=Time.Year&drilldown[]=Store.Store%20Name&measures[]=Org%20Salary&properties[]=Store.Store.Store%20Name.Has%20coffee%20bar&properties[]=Store.Store.Store%20Name.Grocery%20Sqft'
       r = JSON.parse(last_response.body)
-      puts r.inspect
       expect(r['axes'][-1]['members'].map { |m| m['properties'] }).to all(include('Has coffee bar'))
       expect(r['axes'][-1]['members'].map { |m| m['properties'] }).to all(include('Grocery Sqft'))
     end
