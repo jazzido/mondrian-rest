@@ -25,16 +25,7 @@ module Mondrian
                 :has_all => h.has_all?,
                 :all_member_name => h.all_member_name,
                 :levels => h.levels.map { |l|
-                  {
-                    :name => l.name,
-                    :full_name => l.full_name,
-                    :caption => l.caption,
-                    :depth => l.depth,
-                    :annotations => l.annotations,
-                    :properties => l.own_props.map { |p|
-                      p.getName
-                    }
-                  }
+                  l.to_h(get_members: false)
                 }
               }
             }
@@ -96,7 +87,9 @@ module Mondrian
             {
               name: h.name,
               has_all: h.has_all?,
-              levels: h.levels.map(&:to_h) #/levels
+              levels: h.levels.map { |l| 
+                l.to_h(get_members: true)
+              } #/levels
             } # /hierarchies
           } #/map
         } #/ dimension
@@ -120,17 +113,24 @@ module Mondrian
         "#{Java::MondrianOlap::Util.quoteMdxIdentifier(hierarchy.dimension.name)}.#{Java::MondrianOlap::Util.quoteMdxIdentifier(hierarchy.name)}.#{Java::MondrianOlap::Util.quoteMdxIdentifier(self.name)}"
       end
 
-      def to_h(member_properties=[], get_children=false, member_caption=nil)
-        {
+      def to_h(member_properties: [], get_children: false, member_caption: nil, get_members: false)
+        rv = {
           name: self.name,
+          full_name: self.full_name,
+          depth: self.depth,
           caption: self.caption,
-          members: self.members
-            .uniq { |m| m.property_value('MEMBER_KEY') }
-            .map { |m| m.to_h(member_properties, member_caption, get_children) },
+          annotations: self.annotations,
           :properties => self.own_props.map { |p|
             p.getName
           }
         }
+
+        if get_members
+          rv[:members] = self.members
+                           .uniq { |m| m.property_value('MEMBER_KEY') }
+                           .map { |m| m.to_h(member_properties, member_caption, get_children) }
+        end
+        rv
       end
 
       def own_props
@@ -180,14 +180,15 @@ module Mondrian
       end
 
       def dimension_info
-        d = @raw_member.getDimension
-        l = @raw_member.getLevel
-        {
-          name: d.getName,
-          caption: d.getCaption,
-          type: self.dimension_type,
-          level: l.getCaption,
-          level_depth: l.depth
+        d = @raw_member.getDimension()
+        l = @raw_member.getLevel()
+
+        x = {
+          :name => d.getName,
+          :caption => d.getCaption,
+          :type => self.dimension_type,
+          :level => l.getCaption,
+          :level_depth => l.depth
         }
       end
 

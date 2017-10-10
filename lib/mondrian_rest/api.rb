@@ -192,7 +192,10 @@ module Mondrian::REST
                       error!("level #{params[:level_name]} not found in dimension #{params[:dimension_name]}")
                     end
 
-                    level.to_h(params[:member_properties], params[:children], params[:caption])
+                    level.to_h(member_properties: params[:member_properties],
+                               get_children: params[:children],
+                               member_caption: params[:caption],
+                               get_members: true)
                   end
 
                   route_param :member_key,
