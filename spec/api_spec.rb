@@ -148,7 +148,7 @@ describe "Cube API" do
     end
 
     it "should drilldown on the set union of descendents of the cut" do
-      get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=[Product].[Product Name]&measures[]=Unit%20Sales&cut[]={[Product].[Product Department].[Produce], [Product].[Product Department].[Seafood]}&cut[]=[Time].[Year].[1997]'
+      get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=[Product].[Product Name]&measures[]=Unit%20Sales&cut[]=%7B[Product].[Product Department].[Produce], [Product].[Product Department].[Seafood]%7D&cut[]=[Time].[Year].[1997]'
       fnames = JSON.parse(last_response.body)['axes'][2]['members'].map { |m| m['full_name'] }
       # assert that we only obtained descendants of 'Produce' and 'Seafood'
       re = /\[([^\]]+)\]/
@@ -167,7 +167,7 @@ describe "Cube API" do
     end
 
     it "should return an error if cutting on a set that contains a nonexistent member" do
-      get '/cubes/Sales/aggregate?drilldown[]=Time.Month&cut[]={[Product].[Product Department].[Produce], [Product].[Product Department].[Does not Exist]}'
+      get '/cubes/Sales/aggregate?drilldown[]=Time.Month&cut[]=%7B[Product].[Product Department].[Produce], [Product].[Product Department].[Does not Exist]%7D'
       expect(400).to eq(last_response.status)
       expect(last_response.body).to include("Unknown member in cut set")
     end
