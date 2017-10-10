@@ -8,10 +8,10 @@ require 'zip'
 require 'java'
 java.lang.System.setProperty('mondrian.olap.SsasCompatibleNaming', 'true')
 
-require_relative '../lib/mondrian_rest.rb'
-
 require 'coveralls'
 Coveralls.wear!
+
+require_relative '../lib/mondrian_rest.rb'
 
 def _download(url)
   uri = URI.parse(url)
