@@ -3,15 +3,17 @@ require 'csv'
 module Mondrian::REST::Formatters
   module CSV
     def self.call(result, env)
-      qh = env['rack.request.query_hash']
-      add_parents = qh['parents'] == 'true'
-      debug = qh['debug'] == 'true'
-      properties = qh['properties'] || []
+      params = env['api.endpoint'].params
+      add_parents = params['parents']
+      debug = params['debug']
+      sparse = params['sparse']
+      properties = params['properties'] || []
 
       rows = Mondrian::REST::Formatters.tidy(result,
                                              add_parents: add_parents,
                                              debug: debug,
-                                             properties: properties)
+                                             properties: properties,
+                                             sparse: sparse)
 
       ::CSV.generate do |csv|
         rows.each { |row| csv << row }

@@ -1,16 +1,20 @@
 module Mondrian::REST::Formatters
   module JSONRecords
     def self.call(result, env)
+      params = env['api.endpoint'].params
+      add_parents = params['parents']
+      debug = params['debug']
+      sparse = params['sparse']
+      properties = params['properties'] || []
+
       qh = env['rack.request.query_hash']
-      add_parents = qh['parents'] == 'true'
-      debug = qh['debug'] == 'true'
-      properties = qh['properties'] || []
       format = qh['format'] == 'array' ? 'array' : 'object'
 
       rows = Mondrian::REST::Formatters.tidy(result,
                                              add_parents: add_parents,
                                              debug: debug,
-                                             properties: properties).lazy
+                                             properties: properties,
+                                             sparse: sparse).lazy
       keys = rows.first
 
       if format == 'array'

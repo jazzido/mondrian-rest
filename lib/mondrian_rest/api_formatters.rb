@@ -16,6 +16,7 @@ module Mondrian::REST::Formatters
 
     add_parents = options[:add_parents]
     properties = options[:properties]
+    sparse = options[:sparse]
     rs = result.to_h(add_parents, options[:debug])
 
     if rs[:values].empty?
@@ -70,6 +71,8 @@ module Mondrian::REST::Formatters
         msrs = measures.map.with_index { |m, mi|
           (cidxs + [mi]).reduce(values) { |_, idx| _[idx] }
         }
+
+        next if sparse && msrs.all?(&:nil?)
 
         if add_parents
           vdim = cm.each.with_index.reduce([]) { |cnames, (member, j)|

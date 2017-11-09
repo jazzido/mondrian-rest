@@ -43,10 +43,16 @@ describe "Webshop" do
     # XXX TODO assertions
   end
 
-  it "should drilldown by country, month, and product category and return CSV" do
-    get '/cubes/Sales/aggregate.csv?drilldown[]=Country.Continent&drilldown[]=Date.Month&drilldown[]=Product.Category&measures[]=Price%20Total&measures[]=Quantity'
+  it "should drilldown by country, month, and product category and return non-sparse CSV" do
+    get '/cubes/Sales/aggregate.csv?drilldown[]=Country.Continent&drilldown[]=Date.Month&drilldown[]=Product.Category&measures[]=Price%20Total&measures[]=Quantity&sparse=false'
     expect(CSV.parse(last_response.body)).to eq(CSV.read(File.join(File.dirname(__FILE__), 'fixtures', 'webshop_1.csv')))
   end
+
+  it "should drilldown by country, month, and product category and return sparse CSV" do
+    get '/cubes/Sales/aggregate.csv?drilldown[]=Country.Continent&drilldown[]=Date.Month&drilldown[]=Product.Category&measures[]=Price%20Total&measures[]=Quantity&sparse=true'
+    expect(CSV.parse(last_response.body)).to eq(CSV.read(File.join(File.dirname(__FILE__), 'fixtures', 'webshop_1_sparse.csv')))
+  end
+
 
   it "should drilldown by country, month, and product category and return XLS" do
     get '/cubes/Sales/aggregate.xls?drilldown[]=Country&drilldown[]=Date.Month&drilldown[]=Product.Category&measures[]=Price%20Total&measures[]=Quantity'

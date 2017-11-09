@@ -1,3 +1,4 @@
+require 'java'
 require 'uri'
 
 require_relative './api_helpers.rb'
@@ -139,6 +140,7 @@ module Mondrian::REST
             optional :cut, type: Array, desc: "Specification of slicer axis"
             optional :drilldown, type: Array, desc: "Dimension(s) to be drilled down"
             optional :nonempty, type: Boolean, desc: "Only return non empty cells"
+            optional :sparse, type: Boolean, desc: "Skip rows where all measures are null (only applies to CSV, XLS and JSONRECORDS)", default: !java.lang.System.getProperty('mondrian-rest.sparseDefault').nil?
             optional :distinct, type: Boolean, desc: "Apply DISTINCT() to every axis"
             optional :parents, type: Boolean, desc: "Include members' ancestors"
             optional :debug, type: Boolean, desc: "Include generated MDX", default: false
