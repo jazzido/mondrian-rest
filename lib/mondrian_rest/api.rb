@@ -168,7 +168,7 @@ module Mondrian::REST
             get do
               cube = get_cube_or_404(params[:cube_name])
               dimension = cube.dimension(params[:dimension_name])
-              dimension.to_h
+              dimension.to_h(get_members: true)
             end
 
             resource :levels do

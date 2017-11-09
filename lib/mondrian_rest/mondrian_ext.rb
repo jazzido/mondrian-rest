@@ -10,28 +10,6 @@ module Mondrian
       end
 
       def to_h
-        # gather dimensions
-        dimensions = self.dimensions
-                       .find_all { |d| d.dimension_type != :measures }
-                       .map do |d|
-          {
-            :name => d.name,
-            :caption => d.caption,
-            :type => d.dimension_type,
-            :annotations => d.annotations,
-            :hierarchies => d.hierarchies.map { |h|
-              {
-                :name => h.name,
-                :has_all => h.has_all?,
-                :all_member_name => h.all_member_name,
-                :levels => h.levels.map { |l|
-                  l.to_h(get_members: false)
-                }
-              }
-            }
-          }
-        end
-
         # gather named sets
         named_sets = self.named_sets
                        .map do |ns|
@@ -58,7 +36,9 @@ module Mondrian
         return {
           :name => self.name,
           :annotations => self.annotations,
-          :dimensions => dimensions,
+          :dimensions => self.dimensions
+                           .find_all { |d| d.dimension_type != :measures }
+                           .map { |d| d.to_h(get_members: false) },
           :named_sets => named_sets,
           :measures => self.dimensions
                       .find(&:measures?)
@@ -81,14 +61,20 @@ module Mondrian
     end
 
     class Dimension
-      def to_h
+      def to_h(options={})
+        get_members = options[:get_members]
         {
+          name: self.name,
+          caption: self.caption,
+          type: self.dimension_type,
+          annotations: self.annotations,
           hierarchies: self.hierarchies.map { |h|
             {
               name: h.name,
               has_all: h.has_all?,
-              levels: h.levels.map { |l| 
-                l.to_h(get_members: true)
+              all_member_name: h.all_member_name,
+              levels: h.levels.map { |l|
+                l.to_h(get_members: get_members)
               } #/levels
             } # /hierarchies
           } #/map
