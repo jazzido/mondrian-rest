@@ -14,6 +14,8 @@ See [`mondrian-rest-demo`](https://github.com/jazzido/mondrian-rest-demo) and [`
 
 Initial inspiration for this project came from [Stefan Urbanek](https://github.com/Stiivi)'s [`cubes`](http://cubes.databrewery.org/) OLAP server. `mondrian-rest` uses [Raimonds Simanovskis](https://github.com/rsim)'s fantastic [`mondrian-olap`](https://github.com/rsim/mondrian-olap) library.
 
+Development of this project has been generously sponsored by [Datawheel](http://datawheel.us).
+
 
 ## License
 
