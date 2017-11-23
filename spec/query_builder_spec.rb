@@ -117,7 +117,7 @@ describe "Query Builder" do
                           'measures' => ['Unit Sales']
                         })
 
-    expect(q.to_mdx).to eq("SELECT {[Measures].[Unit Sales]} ON COLUMNS,\nDESCENDANTS(Product.Product Family.Drink, [Product].[Product Category]) ON ROWS\nFROM [Sales]")
+    expect(q.to_mdx).to eq("SELECT {[Measures].[Unit Sales]} ON COLUMNS,\nDESCENDANTS(Product.Product Family.Drink, [Product].[Product].[Product Category]) ON ROWS\nFROM [Sales]")
   end
 
 

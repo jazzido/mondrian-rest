@@ -184,11 +184,11 @@ module Mondrian::REST
 
           case cut[:type]
           when :member
-            "DESCENDANTS(#{cut[:cut]}, #{qa.full_name})"
+            "DESCENDANTS(#{cut[:cut]}, #{qa.unique_name})"
           when :set
             # TODO
             "{" + cut[:set_members].map { |m|
-              "DESCENDANTS(#{m.full_name}, #{qa.full_name})"
+              "DESCENDANTS(#{m.full_name}, #{qa.unique_name})"
             }.join(",") + "}"
           when :range
             # TODO
