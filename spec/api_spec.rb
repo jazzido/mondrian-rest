@@ -260,12 +260,20 @@ describe "Cube API" do
       expect(CSV.parse(last_response.body)[1..-1].map { |r| r[3] }).to all(eq('1').or eq('0'))
     end
 
-
     it "should drilldown on a named set" do
       get '/cubes/Warehouse/aggregate.csv?drilldown[]=Top%20Sellers&measures[]=Warehouse%20Profit&nonempty=true'
       expect(CSV.parse(last_response.body).size).to eq(6) # length=5 + header
     end
 
+    it "should cut on a named set" do
+      get '/cubes/Warehouse/aggregate.csv?drilldown[]=[Store+Type].[Store+Type]&cut[]=Top%20Sellers&measures[]=Warehouse%20Profit&nonempty=true'
+      expect(CSV.parse(last_response.body).size).to eq(3) # length=2 + header
+    end
+
+    it "should cut on a named set and a member" do
+      get '/cubes/Warehouse/aggregate.csv?drilldown[]=[Store+Type].[Store+Type]&cut[]=Top%20Sellers&cut[]=[Store].[Store].[Store+Country].%26[USA]&measures[]=Warehouse%20Profit&nonempty=true'
+      expect(CSV.parse(last_response.body).size).to eq(3) # length=2 + header
+    end
 
     it "should accept a POST request" do
       post '/cubes/Sales/aggregate', { 'drilldown' => ['Time.Month', 'Customers.City'], 'measures' => ['Store Sales'], 'parents' => 'true', 'nonempty' => 'true' }

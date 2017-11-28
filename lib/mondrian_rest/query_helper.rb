@@ -21,13 +21,18 @@ module Mondrian::REST
       begin
         return cube.member(member_exp)
       rescue Java::JavaLang::IllegalArgumentException
-        error!("Illegal member expression: #{member_exp}", 400)
+        error!("Illegal expression: #{member_exp}", 400)
       end
+    end
+
+    def get_named_set(cube, named_set_exp)
+      nss = cube.named_sets
+      nss.find { |ns| ns.name == named_set_exp }
     end
 
     ##
     # Parses a string containing a 'cut' expression
-    # It can be a set (`{Dim.Mem, Dim2.Mem2}`), a range (`([Time].[Year].[1997]:[Time].[Year].[1998])`) or a member identifier (`[Time].[Year].[1998]`).
+    # It can be a set (`{Dim.Mem, Dim2.Mem2}`), a range (`([Time].[Year].[1997]:[Time].[Year].[1998])`), a member identifier (`[Time].[Year].[1998]`) or a NamedSet.
     def parse_cut(cube, cut_expr)
       p = mdx_parser.parseExpression(cut_expr)
 
@@ -70,6 +75,13 @@ module Mondrian::REST
           error!("Illegal cut: " + cut_expr, 400)
         end
       when org.olap4j.mdx.IdentifierNode
+
+        # does cut_expr look like a NamedSet?
+        s = get_named_set(cube, cut_expr)
+        if !s.nil?
+          return { level: nil, cut: cut_expr, type: :named_set }
+        end
+
         # if `cut_expr` looks like a member, check that it's level is
         # equal to `level`
         m = get_member(cube, cut_expr)
@@ -177,6 +189,7 @@ module Mondrian::REST
             cut[:cut]
           end
         elsif cut = slicer_axis.find { |lvl, cut|
+                next if cut[:type] == :named_set
                 qa.raw_level.hierarchy == lvl.hierarchy && lvl.depth < qa.depth
               }
           slicer_axis.delete(cut[0])
@@ -217,7 +230,14 @@ module Mondrian::REST
 
       # slicer axes (cut)
       if slicer_axis.size >= 1
-        query = query.where(slicer_axis.values.map { |v| v[:cut] }.join(' * '))
+        puts slicer_axis.inspect
+        query = query.where(slicer_axis.values.map { |v|
+                              if v[:type] == :named_set
+                                "[#{v[:cut]}]"
+                              else
+                                v[:cut]
+                              end
+                            }.join(' * '))
       end
       query
     end
