@@ -230,7 +230,6 @@ module Mondrian::REST
 
       # slicer axes (cut)
       if slicer_axis.size >= 1
-        puts slicer_axis.inspect
         query = query.where(slicer_axis.values.map { |v|
                               if v[:type] == :named_set
                                 "[#{v[:cut]}]"
