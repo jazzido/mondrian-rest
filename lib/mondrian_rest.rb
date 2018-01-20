@@ -6,7 +6,9 @@ require_relative './jars/mondrian-rest_jars.rb'
 
 require 'mondrian-olap'
 require 'grape'
+require 'graphql'
 
 require_relative './mondrian_rest/nest.rb'
 require_relative './mondrian_rest/api.rb'
 require_relative './mondrian_rest/mondrian_ext.rb'
+require_relative './mondrian_rest/graphql.rb'

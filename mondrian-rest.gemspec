@@ -21,6 +21,7 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'mondrian-olap', ["~> 0.8.0"]
   s.add_runtime_dependency 'grape', '~> 1.0', '>= 1.0.0'
   s.add_runtime_dependency 'writeexcel', '~> 1.0', '>= 1.0.5'
+  s.add_runtime_dependency 'graphql', '~> 1.7.3'
 
   s.add_development_dependency "jar-dependencies", "~> 0.3.2"
   s.add_development_dependency 'rake', '~> 12.1', '>= 12.1.0'
