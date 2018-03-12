@@ -313,6 +313,15 @@ describe "Cube API" do
 
       expect(last_response.body).to eql("")
     end
+
+    describe "Filter measures" do
+      it "should filter on single-clause valid filter expression" do
+        get '/cubes/Store/aggregate?drilldown%5B%5D=%5BStore%5D.%5BStore+Country%5D&drilldown%5B%5D=%5BStore+Type%5D.%5BStore+Type%5D&measures%5B%5D=Grocery+Sqft&measures%5B%5D=Store+Sqft&filter%5B%5D=Store+Sqft+>+50000&sparse=true'
+
+        puts last_response.body
+      end
+    end
+
   end
 end
 
