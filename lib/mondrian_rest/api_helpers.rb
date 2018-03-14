@@ -4,7 +4,6 @@ module Mondrian::REST
   end
 
   module APIHelpers
-
     @@olap = nil
     @@mdx_parser = nil
 
@@ -42,44 +41,66 @@ module Mondrian::REST
 
     def mdx(query)
       logger.info("Executing MDX query #{query}")
-      begin
-        result = olap.execute query
-        result.mdx = query if params[:debug]
-        result.properties = params[:properties]
-        result.caption_properties = params[:caption] 
-        result.cube = Mondrian::OLAP::Cube.new(olap,
-                                               olap.raw_connection.prepareOlapStatement(query).getCube)
-        return result
-      rescue Mondrian::OLAP::Error => st
-        error!({error: st.backtrace}, 400)
-      end
+
+      result = olap.execute query
+      result.mdx = query if params[:debug]
+      result.properties = params[:properties]
+      result.caption_properties = params[:caption]
+      result.cube = Mondrian::OLAP::Cube.new(olap,
+                                             olap.raw_connection.prepareOlapStatement(query).getCube)
+      result
+    rescue Mondrian::OLAP::Error => st
+      error!({ error: st.backtrace }, 400)
     end
 
     def run_from_params(params)
       cube = get_cube_or_404(params[:cube_name])
       query = build_query(cube, params)
-      mdx_query = query.to_mdx
 
       result = mdx(query.to_mdx)
       result.cube = cube
       result
     end
 
-    NEST = Mondrian::REST::Nest.new
-             .key { |d| d[0] }
-             .key { |d| d[1] }
+    def get_members(params)
+      cube = get_cube_or_404(params[:cube_name])
 
-    def self.parse_caption_properties(cprops)
-      if cprops.nil? or cprops.size < 1
-        return {}
+      dimension = cube.dimension(params[:dimension_name])
+      if dimension.nil?
+        error!("dimension #{params[:dimension_name]} not found in cube #{params[:cube_name]}", 404)
       end
 
-      NEST.map(cprops.map { |cp|
+      hier = unless params[:hierarchy_name].nil?
+               h = dimension.hierarchy(params[:hierarchy_name])
+               error!("Hierarchy #{params[:hierarchy_name]} does not exist in dimension #{params[:dimension_name]}", 404) if h.nil?
+               h
+             else
+               dimension.hierarchies.first
+             end
+
+      level = hier.level(params[:level_name])
+      if level.nil?
+        error!("level #{params[:level_name]} not found in dimension #{params[:dimension_name]}")
+      end
+
+      level.to_h(member_properties: params[:member_properties],
+                 get_children: params[:children],
+                 member_caption: params[:caption],
+                 get_members: true)
+    end
+
+    NEST = Mondrian::REST::Nest.new
+                               .key { |d| d[0] }
+                               .key { |d| d[1] }.freeze
+
+    def self.parse_caption_properties(cprops)
+      return {} if cprops.nil? || cprops.empty?
+
+      NEST.map(cprops.map do |cp|
                  names = org.olap4j.mdx.IdentifierNode.parseIdentifier(cp).getSegmentList.to_a.map(&:name)
                  # IF prop in Dim.Hier.Lvl.Prop format, skip names[1]
                  names.size == 4 ? [names[0], names[2], names[3]] : names
-               })
-
+               end)
     end
 
     ##

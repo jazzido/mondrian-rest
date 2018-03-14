@@ -2,8 +2,6 @@ require_relative './formatters/aggregation_json'
 require_relative './formatters/csv'
 require_relative './formatters/excel'
 require_relative './formatters/jsonrecords'
-require_relative './formatters/jsonstat'
-
 
 module Mondrian::REST::Formatters
 
@@ -24,7 +22,12 @@ module Mondrian::REST::Formatters
     end
 
     measures = rs[:axes].first[:members]
-    dimensions = rs[:axis_dimensions][1..-1]
+    dimensions = rs[:axes][1..-1]
+
+    indexed_members = rs[:axes].map { |ax|
+      ax[:members].index_by { |m| m[:key] }
+    }
+
     columns = []
     slices = []
     level_has_all = []
@@ -33,8 +36,7 @@ module Mondrian::REST::Formatters
       dimensions.each do |dd|
         if add_parents
           hier = cube.dimension(dd[:name])
-                   .hierarchies
-                   .first # TODO: Support other hierarchies
+                   .hierarchy(dd[:hierarchy])
 
           level_has_all << hier.has_all?
           slices << dd[:level_depth]
@@ -58,37 +60,23 @@ module Mondrian::REST::Formatters
       # append properties and measure columns and yield table header
       y.yield columns + pnames + pluck(measures, :name)
 
-      prod = rs[:axes][1..-1].map { |e|
-        e[:members].map.with_index { |e_, i| [e_,i] }
-      }
-      values = rs[:values]
+      rs[:cell_keys].each_with_index do |row, i|
+        cm = row.each_with_index.map { |member_key, i| indexed_members[i+1][member_key] }
+        msrs = rs[:values][i]
 
-      prod.shift.product(*prod).each do |cell|
-        cidxs = cell.map { |c,i| i }.reverse
-
-        cm = cell.map(&:first)
-
-        msrs = measures.map.with_index { |m, mi|
-          (cidxs + [mi]).reduce(values) { |_, idx| _[idx] }
-        }
-
-        next if sparse && msrs.all?(&:nil?)
-
-        if add_parents
+        if !add_parents
+          y.yield pluck(cm, :key).zip(pluck(cm, :caption)).flatten \
+                  + get_props(cm, pnames, props, dimensions) \
+                  + msrs
+        else
           vdim = cm.each.with_index.reduce([]) { |cnames, (member, j)|
-            member[:ancestors][0...slices[j] - (level_has_all[j] ? 1 : 0)].reverse.each { |ancestor|
-              cnames += [ancestor[:key], ancestor[:caption]]
-            }
-            cnames += [member[:key], member[:caption]]
-          }
+                     member[:ancestors][0...slices[j] - (level_has_all[j] ? 1 : 0)].reverse.each { |ancestor|
+                       cnames += [ancestor[:key], ancestor[:caption]]
+                     }
+                     cnames += [member[:key], member[:caption]]
+                   }
 
           y.yield vdim + get_props(cm, pnames, props, dimensions) + msrs
-        else
-          row = pluck(cm, :key)
-                  .zip(pluck(cm, :caption))
-                  .flatten
-
-          y.yield row + get_props(cm, pnames, props, dimensions) + msrs
         end
       end
     end

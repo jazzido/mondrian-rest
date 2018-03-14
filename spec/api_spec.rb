@@ -63,6 +63,12 @@ describe "Cube API" do
       expect(res['members'].map { |m| m['properties' ]}).to all(have_key('Street address').and have_key('Has coffee bar'))
     end
 
+    it "should return the members of a level of a non-default hierarchy" do
+      get '/cubes/Sales/dimensions/Time/hierarchies/Weekly/levels/Week/members'
+      expect(last_response.status).to eq(200)
+      # XXX TODO better assertions
+    end
+
 
     it "should return the members of a dimension level and replace their caption with the requested property" do
       get '/cubes/Sales/dimensions/Store/levels/Store%20Name/members?member_properties[]=Street%20address&member_properties[]=Has%20coffee%20bar&caption=Street%20address'
@@ -96,7 +102,7 @@ describe "Cube API" do
 
     it "should return a member by full name" do
       get '/cubes/Sales%202/members?full_name=%5BProduct%5D.%5BDrink%5D'
-      expected = {"name"=>"Drink", "full_name"=>"[Product].[Drink]", "caption"=>"Drink", "children" => [], "all_member?"=>false, "drillable?"=>true, "depth"=>1, "key"=>"Drink", "level_name" => "Product Family", "num_children"=>3, "parent_name"=>"[Product].[All Products]", "ancestors"=>[{"name"=>"All Products", "full_name"=>"[Product].[All Products]", "caption"=>"All Products", "all_member?"=>true, "drillable?"=>true, "depth"=>0, "key"=>0, "num_children"=>3, "parent_name"=>nil, "level_name"=>"(All)", "children" => []}], "dimension"=>{"name"=>"Product", "caption"=>"Product", "type"=>"standard", "level"=>"Product Family", "level_depth"=>1}}
+      expected = {"name"=>"Drink", "full_name"=>"[Product].[Drink]", "caption"=>"Drink", "children" => [], "all_member?"=>false, "drillable?"=>true, "depth"=>1, "key"=>"Drink", "level_name" => "Product Family", "num_children"=>3, "parent_name"=>"[Product].[All Products]", "ancestors"=>[{"name"=>"All Products", "full_name"=>"[Product].[All Products]", "caption"=>"All Products", "all_member?"=>true, "drillable?"=>true, "depth"=>0, "key"=>0, "num_children"=>3, "parent_name"=>nil, "level_name"=>"(All)", "children" => []}], "dimension"=>{"name"=>"Product", "caption"=>"Product", "type"=>"standard", "level"=>"Product Family", "level_depth"=>1, "hierarchy" => "Product"}}
       expect(JSON.parse(last_response.body)).to eq(expected)
     end
 
@@ -118,20 +124,9 @@ describe "Cube API" do
       expect(266773.0).to eq(JSON.parse(last_response.body)['values'][0])
     end
 
-    it "should aggregate on two dimensions of the Sales cube" do
+    it "should aggregate on three dimensions of the Sales cube" do
       get '/cubes/Sales/aggregate?drilldown[]=[Product].[Product Family]&drilldown[]=[Store%20Type].[Store%20Type]&drilldown[]=[Time].[Year]&measures[]=Store%20Sales'
-      exp = [[[[13487.16], [117088.87], [31486.21]],
-              [[3940.54], [33424.17], [8385.53]],
-              [[nil], [nil], [nil]],
-              [[2348.79], [17314.24], [4666.2]],
-              [[1142.61], [10175.3], [2568.47]],
-              [[27917.11], [231033.01], [60259.92]]],
-             [[[nil], [nil], [nil]],
-              [[nil], [nil], [nil]],
-              [[nil], [nil], [nil]],
-              [[nil], [nil], [nil]],
-              [[nil], [nil], [nil]],
-              [[nil], [nil], [nil]]]]
+      exp = [[13487.16], [nil], [3940.54], [nil], [nil], [nil], [2348.79], [nil], [1142.61], [nil], [27917.11], [nil], [117088.87], [nil], [33424.17], [nil], [nil], [nil], [17314.24], [nil], [10175.3], [nil], [231033.01], [nil], [31486.21], [nil], [8385.53], [nil], [nil], [nil], [4666.2], [nil], [2568.47], [nil], [60259.92], [nil]]
       expect(exp).to eq(JSON.parse(last_response.body)['values'])
     end
 
@@ -193,17 +188,17 @@ describe "Cube API" do
       get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&debug=true'
       r = JSON.parse(last_response.body)
       expect(r.has_key?('mdx')).to be(true)
-      expect(r['mdx']).to eq("SELECT {[Measures].[Store Sales]} ON COLUMNS,\n[Time].[Time].[Month].Members ON ROWS,\n[Customers].[Customers].[City].Members ON PAGES\nFROM [Sales]")
+      expect(r['mdx']).to eq("SELECT {[Measures].[Store Sales]} ON COLUMNS,\n[Time].[Time].[Month].Members * [Customers].[Customers].[City].Members ON ROWS\nFROM [Sales]")
     end
 
     it "should not include the generated MDX in the response if debug not given or if debug=false" do
       get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales'
       r = JSON.parse(last_response.body)
-      expect(r.has_key?('mdx')).to be(false)
+      expect(r['mdx']).to be(nil)
 
       get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&debug=false'
       r = JSON.parse(last_response.body)
-      expect(r.has_key?('mdx')).to be(false)
+      expect(r['mdx']).to be(nil)
     end
 
     it "should add the parents as columns to the CSV, if requested" do
@@ -288,8 +283,7 @@ describe "Cube API" do
     it "should add parents to the result of a raw MDX query" do
       mdx = <<-MDX
         SELECT {[Measures].[Store Sales]} ON COLUMNS,
-               TOPCOUNT(Time.Time.Month.Members, 10, [Measures].[Store Sales]) ON ROWS,
-               [Customers].[Customers].[City].Members ON PAGES
+               TOPCOUNT(Time.Time.Month.Members, 10, [Measures].[Store Sales]) * [Customers].[Customers].[City].Members ON ROWS
         FROM [Sales]
       MDX
 
@@ -313,6 +307,120 @@ describe "Cube API" do
 
       expect(last_response.body).to eql("")
     end
+
+    describe "Ordering" do
+
+      it "should order on a measure, ascending" do
+        # get without order
+        get '/cubes/Store/aggregate.csv?drilldown%5B%5D=%5BStore%5D.%5BStore+Name%5D&drilldown%5B%5D=%5BStore+Type%5D.%5BStore+Type%5D&measures%5B%5D=Grocery+Sqft&measures%5B%5D=Store+Sqft&sparse=true&nonempty=true'
+        csv = CSV.parse(last_response.body)[1..-1].map { |r| r[-1] } # get the measure value
+        expect(csv[0..-2].zip(csv[1..-1]).map { |a| a[0].to_f <= a[1].to_f }.all?).to be(false)
+
+        # get with order
+        get '/cubes/Store/aggregate.csv?drilldown%5B%5D=%5BStore%5D.%5BStore+Name%5D&drilldown%5B%5D=%5BStore+Type%5D.%5BStore+Type%5D&measures%5B%5D=Grocery+Sqft&measures%5B%5D=Store+Sqft&sparse=true&order=Measures.%5BStore+Sqft%5D&order_desc=false&nonempty=true'
+        csv = CSV.parse(last_response.body)[1..-1].map { |r| r[-1] } # get the measure value
+
+        expect(csv[0..-2].zip(csv[1..-1]).map { |a| a[0].to_f <= a[1].to_f }.all?).to be(true)
+      end
+
+      it "should order a filtered aggregation" do
+        get '/cubes/Store/aggregate.csv?drilldown%5B%5D=%5BStore%5D.%5BStore+Country%5D&drilldown%5B%5D=%5BStore+Type%5D.%5BStore+Type%5D&measures%5B%5D=Grocery+Sqft&measures%5B%5D=Store+Sqft&filter%5B%5D=Store+Sqft+>+50000&sparse=true&order=Measures.%5BStore+Sqft%5D'
+
+        csv = CSV.parse(last_response.body)[1..-1].map { |r| r[-1] } # get the measure value
+        # assert filter
+        expect(csv.map { |r| r.to_f > 50_000 }.all?).to be(true)
+        # assert order
+        expect(csv[0..-2].zip(csv[1..-1]).map { |a| a[0].to_f <= a[1].to_f }.all?).to be(true)
+      end
+
+      it "should error on an invalid measure" do
+        get '/cubes/Store/aggregate?drilldown%5B%5D=%5BStore%5D.%5BStore+Name%5D&drilldown%5B%5D=%5BStore+Type%5D.%5BStore+Type%5D&measures%5B%5D=Grocery+Sqft&measures%5B%5D=Store+Sqft&sparse=true&order=Measures.%5BBLEBLEH%5D&order_desc=false'
+        expect(last_response.status).to eq(400)
+        expect(JSON.parse(last_response.body)['error']).to eq("Invalid measure in order: BLEBLEH")
+      end
+
+      it "should order on a member's method, ascending" do
+        get '/cubes/Store/aggregate.csv?drilldown%5B%5D=%5BStore%5D.%5BStore+Name%5D&drilldown%5B%5D=%5BStore+Type%5D.%5BStore+Type%5D&measures%5B%5D=Grocery+Sqft&measures%5B%5D=Store+Sqft&sparse=true&order=%5BStore%5D.%5BStore+Name%5D.Caption&order_desc=false'
+        csv = CSV.parse(last_response.body)[1..-1].map { |r| r[1] } # get the caption value
+        expect(csv[0..-2].zip(csv[1..-1]).map { |a| a[0] <= a[1] }.all?).to be(true)
+      end
+
+      it "should order on a member's property, descending" do
+        get '/cubes/Store/aggregate.csv?drilldown%5B%5D=%5BStore%5D.%5BStore+Name%5D&drilldown%5B%5D=%5BStore+Type%5D.%5BStore+Type%5D&measures%5B%5D=Grocery+Sqft&measures%5B%5D=Store+Sqft&sparse=true&order=%5BStore%5D.%5BStore Name%5D.%5BStreet address%5D&order_desc=true&properties[]=%5BStore%5D.%5BStore Name%5D.%5BStreet address%5D&nonempty=true'
+
+        csv = CSV.parse(last_response.body)[1..-1].map { |r| r[-3] } # get the property value
+        expect(csv[0..-2].zip(csv[1..-1]).map { |a| a[0] >= a[1] }.all?).to be(true)
+      end
+
+      it "should error on an invalid member property" do
+        get '/cubes/Store/aggregate?drilldown%5B%5D=%5BStore%5D.%5BStore+Name%5D&drilldown%5B%5D=%5BStore+Type%5D.%5BStore+Type%5D&measures%5B%5D=Grocery+Sqft&measures%5B%5D=Store+Sqft&sparse=true&order=%5BStore%5D.%5BStore Name%5D.%5BDOES+NOT+EXIST%5D&order_desc=true&properties[]=%5BStore%5D.%5BStore Name%5D.%5BStreet address%5D&nonempty=true'
+        expect(last_response.status).to eq(400)
+        expect(JSON.parse(last_response.body)['error']).to eq("Invalid order: property [Store].[Store Name].[DOES NOT EXIST] not found")
+      end
+    end
+
+    describe "Filter measures" do
+      it "should filter on single-clause valid filter expression" do
+
+        # get unfiltered aggregation
+        get '/cubes/Store/aggregate.csv?drilldown%5B%5D=%5BStore%5D.%5BStore+Country%5D&drilldown%5B%5D=%5BStore+Type%5D.%5BStore+Type%5D&measures%5B%5D=Grocery+Sqft&measures%5B%5D=Store+Sqft&sparse=true'
+        unfiltered_csv = CSV.parse(last_response.body)[1..-1]
+        expect(unfiltered_csv.map { |r| r[-1].to_f <= 50000 }.any?).to be(true)
+
+        # get filtered assertion
+        get '/cubes/Store/aggregate.csv?drilldown%5B%5D=%5BStore%5D.%5BStore+Country%5D&drilldown%5B%5D=%5BStore+Type%5D.%5BStore+Type%5D&measures%5B%5D=Grocery+Sqft&measures%5B%5D=Store+Sqft&filter%5B%5D=Store+Sqft+>+50000&sparse=true'
+
+        filtered_csv = CSV.parse(last_response.body)[1..-1]
+        expect(filtered_csv.map { |r| r[-1].to_f > 50000 }.all?).to be(true)
+
+        expect(unfiltered_csv.size).to be > filtered_csv.size
+      end
+
+      it "should filter on multiple-clause valid filter expression" do
+        # get filtered assertion
+        get '/cubes/Store/aggregate.csv?drilldown%5B%5D=%5BStore%5D.%5BStore+Country%5D&drilldown%5B%5D=%5BStore+Type%5D.%5BStore+Type%5D&measures%5B%5D=Grocery+Sqft&measures%5B%5D=Store+Sqft&filter%5B%5D=Store+Sqft+>+50000&filter%5B%5D=Grocery+Sqft+<+90000&sparse=true'
+
+        filtered_csv = CSV.parse(last_response.body)[1..-1]
+        expect(filtered_csv.map { |r| r[-2].to_f < 90000 && r[-1].to_f > 50000 }.all?).to be(true)
+      end
+
+      it "should error on a malformed filter expression" do
+
+        get '/cubes/Store/aggregate.csv?drilldown%5B%5D=%5BStore%5D.%5BStore+Country%5D&drilldown%5B%5D=%5BStore+Type%5D.%5BStore+Type%5D&measures%5B%5D=Grocery+Sqft&measures%5B%5D=Store+Sqft&filter%5B%5D=Store+Sqft+>&sparse=true'
+
+        expect(last_response.status).to eq(400)
+        expect(last_response.body).to eq("Filter clause Store Sqft > is invalid")
+      end
+
+      it "should error on a filter expression that refers to a measure that doesn't exist" do
+        get '/cubes/Store/aggregate?drilldown%5B%5D=%5BStore%5D.%5BStore+Country%5D&drilldown%5B%5D=%5BStore+Type%5D.%5BStore+Type%5D&measures%5B%5D=Grocery+Sqft&measures%5B%5D=Store+Sqft&filter%5B%5D=Invalid+measure+>+50000&sparse=true'
+
+        expect(last_response.status).to eq(400)
+        expect(JSON.parse(last_response.body)).to eq({"error" => "Invalid filter: measure Invalid measure does not exist"})
+      end
+    end
+
+    describe "Offset/Limit" do
+      it "should take the first 10 elements" do
+
+        # get without limit
+        get '/cubes/Sales/aggregate.csv?drilldown[]=Time.Year&drilldown[]=Customers.City&measures[]=Store%20Sales&order=[Customers].[Customers].[City].Caption'
+        no_limit_csv = CSV.parse(last_response.body)
+
+
+        # get with limit
+        get '/cubes/Sales/aggregate.csv?drilldown[]=Time.Year&drilldown[]=Customers.City&measures[]=Store%20Sales&offset=0&limit=10&order=[Customers].[Customers].[City].Caption'
+        limit_csv = CSV.parse(last_response.body)
+
+        expect(no_limit_csv[0...11]).to eq(limit_csv)
+
+      end
+
+      it "should return an empty resultset when offset is > rowcount" do
+        get '/cubes/Sales/aggregate?drilldown[]=Time.Year&drilldown[]=Customers.City&measures[]=Store%20Sales&offset=20000&limit=10&order=[Customers].[Customers].[City].Caption'
+
+        expect(JSON.parse(last_response.body)['values']).to be_empty
+      end
+    end
   end
 end
-
