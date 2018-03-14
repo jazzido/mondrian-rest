@@ -150,9 +150,9 @@ module Mondrian::REST
         error!("Filter clause #{filter} is invalid", 400)
       end
 
-      # unless cube.valid_measure?(m['measure'])
-      #   error!("Invalid filter: measure #{m['measure']} does not exist", 400)
-      # end
+      unless cube.valid_measure?(m['measure'])
+        error!("Invalid filter: measure #{m['measure'].strip} does not exist", 400)
+      end
 
       {
         :measure => m['measure'].strip,
