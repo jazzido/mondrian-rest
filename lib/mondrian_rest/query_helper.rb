@@ -2,6 +2,12 @@
 module Mondrian::REST
   module QueryHelper
 
+    VALID_FILTER_OPS = [
+      '>', '<', '>=', '<=', '=', '<>'
+    ]
+    VALID_FILTER_RE = /(?<measure>[a-zA-Z0-9\s]+)\s*(?<operand>#{VALID_FILTER_OPS.join("|")})\s*(?<value>-?\d+\.?\d*)/
+    FILTERED_MEASURE_PREFIX = "--MRFILTERED "
+
     def unparse_node(node)
       sw = java.io.StringWriter.new
       ptw = org.olap4j.mdx.ParseTreeWriter.new(sw)
@@ -138,6 +144,23 @@ module Mondrian::REST
       level
     end
 
+    def parse_measure_filter(cube, filter)
+      m = VALID_FILTER_RE.match(filter)
+      if m.nil?
+        error!("Filter clause #{filter} is invalid", 400)
+      end
+
+      unless cube.valid_measure?(m['measure'])
+        error!("Invalid filter: measure #{m['measure'].strip} does not exist", 400)
+      end
+
+      {
+        :measure => m['measure'].strip,
+        :operand => m['operand'].strip,
+        :value => m['value'].strip
+      }
+    end
+
     def build_query(cube, options={})
 
       measure_members = cube.dimension('Measures').hierarchy.levels.first.members
@@ -146,22 +169,38 @@ module Mondrian::REST
         'drilldown' => [],
         'measures' => [measure_members.first.name],
         'nonempty' => false,
-        'distinct' => false
+        'distinct' => false,
+        'filter' => []
       }.merge(options)
 
       # validate measures exist
-      cm_names = measure_members.map(&:name)
-
       options['measures'].each { |m|
-        error!("Measure #{m} does not exist in cube #{cube.name}", 400) unless cm_names.include?(m)
+        error!("Measure #{m} does not exist in cube #{cube.name}", 400) unless cube.valid_measure?(m)
       }
 
-      # measures go in axis(0) of the resultset
+      # create query object
       query = olap.from(cube.name)
-              .axis(0,
-                    *options['measures'].map { |m|
-                      measure_members.find { |cm| cm.name == m }.full_name
-                    })
+
+      filters = options['filter'].map { |f| parse_measure_filter(cube, f) }
+
+      query = if filters.size > 0
+                # build IIF clause
+                iif = filters.map { |f|  "Measures.[#{org.olap4j.mdx.MdxUtil.mdxEncodeString(f[:measure])}] #{f[:operand]} #{f[:value]}"}.join(" AND ")
+                options['measures'].reduce(query) { |query, measure|
+                  query
+                    .with_member("Measures.[#{FILTERED_MEASURE_PREFIX}#{org.olap4j.mdx.MdxUtil.mdxEncodeString(measure)}]")
+                    .as("IIF(#{iif}, [#{org.olap4j.mdx.MdxUtil.mdxEncodeString(measure)}], NULL)")
+                }
+                  .axis(0,
+                        options['measures'].map { |m| "Measures.[#{FILTERED_MEASURE_PREFIX}#{org.olap4j.mdx.MdxUtil.mdxEncodeString(m)}]"})
+              else
+                query
+                  .axis(0,
+                        *options['measures'].map { |m|
+                          measure_members.find { |cm| cm.name == m }.full_name
+                        })
+              end
+
       if options['nonempty']
         query = query.nonempty
       end
