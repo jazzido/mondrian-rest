@@ -11,11 +11,15 @@ describe Mondrian::REST::GraphQL::Schema do
     @olap.connect
   end
 
+  def execute(query)
+    Mondrian::REST::GraphQL::Schema.execute(query,
+                                            context: { olap: @olap })
+  end
+
   describe "Metadata resources" do
     it "should return a list of cubes" do
       # TODO assertions
-      puts Mondrian::REST::GraphQL::Schema.execute("query { cubes { name } }",
-                                                   context: { olap: @olap }).inspect
+      puts execute("query { cubes { name } }").inspect
     end
 
     it "should get dimensions" do
@@ -24,12 +28,55 @@ describe Mondrian::REST::GraphQL::Schema do
       query {
         cubes {
           name
+          dimensions {
+            name
+            # type
+            hierarchies {
+              name
+              hasAll
+              levels {
+                name
+                fullName
+                caption
+                depth
+              }
+            }
+          }
         }
       }
       Q
-      puts Mondrian::REST::GraphQL::Schema.execute(Q,
-                                                   context: { olap: @olap }).inspect
+      puts execute(Q).inspect
     end
   end
 
+  it "should get a cube" do
+    # TODO assertions
+    Q = <<-Q
+      query {
+         cube(name: "Sales") {
+           name
+           dimensions {
+             hierarchies {
+               name
+             }
+           }
+         }
+      }
+    Q
+    puts execute(Q).inspect
+  end
+
+  it "should get a cube" do
+    # TODO Assertions
+    Q = <<-Q
+      query {
+         aggregate {
+           CubeSales {
+             name
+           }
+         }
+      }
+    Q
+    puts execute(Q).inspect
+  end
 end

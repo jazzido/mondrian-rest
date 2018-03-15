@@ -5,6 +5,8 @@ require_relative './api_helpers.rb'
 require_relative './query_helper.rb'
 require_relative './api_formatters.rb'
 
+
+
 module Mondrian::REST
 
   class Api < Grape::API
