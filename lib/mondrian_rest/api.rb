@@ -146,7 +146,6 @@ module Mondrian::REST
             optional :debug, type: Boolean, desc: "Include generated MDX", default: false
             optional :properties, type: Array, desc: "Include member properties"
             optional :caption, type: Array, desc: "Replace caption with property", default: []
-            optional :filter, type: Array, desc: "Filter by measure value. Accepts: #{Mondrian::REST::QueryHelper::VALID_FILTER_OPS.join(', ')}"
           end
 
           get do

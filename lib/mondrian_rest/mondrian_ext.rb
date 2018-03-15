@@ -9,15 +9,6 @@ module Mondrian
         raw_cube.getSets
       end
 
-      def valid_measure?(name)
-        self.dimension('Measures')
-          .hierarchy
-          .levels.first
-          .members
-          .map(&:name)
-          .include?(name)
-      end
-
       def to_h
         # gather named sets
         named_sets = self.named_sets
@@ -142,17 +133,6 @@ module Mondrian
     class Member
 
       alias_method :_caption, :caption
-      alias_method :_name, :name
-      alias_method :_full_name, :full_name
-
-
-      def is_measure?
-        self.dimension_type == :measures
-      end
-
-      def is_filtered_measure?
-        self.is_measure? && self._name.start_with?(Mondrian::REST::QueryHelper::FILTERED_MEASURE_PREFIX)
-      end
 
       def raw_level
         @raw_member.getLevel
@@ -180,19 +160,9 @@ module Mondrian
         Hash[kv]
       end
 
-      def full_name
-        is_filtered_measure? ? self._full_name.sub(Mondrian::REST::QueryHelper::FILTERED_MEASURE_PREFIX, "") : self._full_name
-      end
-
-      def name
-        is_filtered_measure? ? self._name.sub(Mondrian::REST::QueryHelper::FILTERED_MEASURE_PREFIX, "") : self._name
-      end
-
       def pcaption(caption_property=nil)
         if caption_property
           self.property_value(caption_property)
-        elsif self.is_filtered_measure?
-          self._caption.sub(Mondrian::REST::QueryHelper::FILTERED_MEASURE_PREFIX, "")
         else
           self._caption
         end
