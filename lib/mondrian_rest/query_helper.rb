@@ -212,21 +212,18 @@ module Mondrian::REST
         end
       end
 
-      # query axes (drilldown)
-      dd.each do |ds|
-        query = query.axis(axis_idx,
-                           ds)
-
-        if options['distinct']
-          query = query.distinct
-        end
-
-        if options['nonempty']
-          query = query.nonempty
-        end
-
-        axis_idx += 1
+      # Cross join all the drilldowns
+      query = query.axis(axis_idx, dd.join(' * '))
+      if options['distinct']
+        query = query.distinct
       end
+
+      if options['nonempty']
+        query = query.nonempty
+      end
+
+      axis_idx += 1
+
 
       # slicer axes (cut)
       if slicer_axis.size >= 1

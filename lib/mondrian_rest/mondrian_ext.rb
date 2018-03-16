@@ -171,13 +171,15 @@ module Mondrian
       def dimension_info
         d = @raw_member.getDimension()
         l = @raw_member.getLevel()
+        h = l.getHierarchy()
 
         x = {
-          :name => d.getName,
-          :caption => d.getCaption,
-          :type => self.dimension_type,
-          :level => l.getCaption,
-          :level_depth => l.depth
+          name: d.getName,
+          caption: d.getCaption,
+          type: self.dimension_type,
+          level: l.getCaption,
+          level_depth: l.depth,
+          hierarchy: h.getName
         }
       end
 
@@ -201,23 +203,25 @@ module Mondrian
         # return the contents of the filter axis
         # puts self.raw_cell_set.getFilterAxis.inspect
 
-        dimensions = self.axis_members.map { |am| am.first ? am.first.dimension_info : nil }
+        drilldowns_num = self.raw_cell_set.getMetaData.getAxesMetaData[1].getHierarchies.size
 
-        pprops = unless self.properties.nil?
-                   Mondrian::REST::APIHelpers.parse_properties(self.properties,
-                                                               dimensions[1..-1]) # exclude Measures dimension
-                 else
-                   {}
-                 end
+        ## TODO optimize
+        dimensions = self.axis_members
+                       .flatten
+                       .map(&:dimension_info)
+                       .uniq
 
-        cprops = Mondrian::REST::APIHelpers.parse_caption_properties(
-          self.caption_properties
-        )
+        pprops = {}
+        pprops = Mondrian::REST::APIHelpers.parse_properties(self.properties, dimensions[1..-1]) unless self.properties.nil?
+        cprops = Mondrian::REST::APIHelpers.parse_caption_properties(self.caption_properties)
+
+        measure_axis = self.axis_members.flatten.first.to_h
+        ms = if drilldowns_num == 1 then [self.axis_members[1]] else self.axis_members[1].transpose  end
 
         rv = {
-          axes: self.axis_members.each_with_index.map { |a, i|
+          axes: [measure_axis] + ms.map { |a|
             {
-              members: a.map { |m|
+              members: a.uniq(&:full_name).map { |m|
                 mh = m.to_h(
                   pprops.dig(m.raw_member.getDimension.name, m.raw_level.name) || [],
                   (cprops.dig(m.raw_member.getDimension.name, m.raw_level.name) || [[]])[0][-1]
@@ -236,14 +240,24 @@ module Mondrian
               }
             }
           },
-          axis_dimensions: dimensions,
-          values: self.values
+          axis_dimensions: dimensions
         }
 
+        puts "XXXXX"
+        puts self.values.inspect
+        puts "XXXXX"
+
+
+        rv[:values] = if drilldowns_num == 1
+                        self.values
+                      else
+                        rv[:axes][1..-1]
+                          .map { |a| a[:members].size }
+                          .reduce(self.values) { |v, len| v.each_slice(len).to_a }
+                      end
+
         rv[:mdx] = self.mdx if debug
-
         rv
-
       end
     end
   end
