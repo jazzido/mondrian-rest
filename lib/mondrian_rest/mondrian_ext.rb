@@ -9,6 +9,16 @@ module Mondrian
         raw_cube.getSets
       end
 
+      def valid_measure?(name)
+        self.dimension('Measures')
+          .hierarchy
+          .levels
+          .first
+          .members
+          .map(&:name)
+          .include?(name)
+      end
+
       def to_h
         # gather named sets
         named_sets = self.named_sets
@@ -203,7 +213,11 @@ module Mondrian
         # return the contents of the filter axis
         # puts self.raw_cell_set.getFilterAxis.inspect
 
-        drilldowns_num = self.raw_cell_set.getMetaData.getAxesMetaData[1].getHierarchies.size
+        drilldowns_num = if self.raw_cell_set.getMetaData.getAxesMetaData.size == 1
+                           0
+                         else
+                           self.raw_cell_set.getMetaData.getAxesMetaData[1].getHierarchies.size
+                         end
         dimensions = self.axis_members
                        .flatten
                        .map(&:dimension_info)
@@ -213,12 +227,19 @@ module Mondrian
         pprops = Mondrian::REST::APIHelpers.parse_properties(self.properties, dimensions[1..-1]) unless self.properties.nil?
         cprops = Mondrian::REST::APIHelpers.parse_caption_properties(self.caption_properties)
 
-        measure_axis = self.axis_members.first.flatten.map(&:to_h)
+        measure_axis = { members: self.axis_members.first.flatten.map(&:to_h) }
+        measure_axis.merge!(dimensions[0]) if dimensions.size > 0
 
-        ms = if drilldowns_num == 1 then [self.axis_members[1]] else self.axis_members[1].transpose  end
+        member_axes = if drilldowns_num > 1
+                        self.axis_members[1].transpose
+                      elsif drilldowns_num == 1
+                        [self.axis_members[1]]
+                      else
+                        []
+                      end
 
         {
-          axes: [{members: measure_axis }.merge(dimensions[0])] + ms.each_with_index.map { |a, axis_index|
+          axes: [measure_axis] + member_axes.each_with_index.map { |a, axis_index|
             {
               members: a.uniq(&:full_name).map { |m|
                 mh = m.to_h(
@@ -237,13 +258,15 @@ module Mondrian
                 end
                 mh
               }
-            }.merge(dimensions[axis_index+1])
+            }.merge(dimensions.size > 1 ? dimensions[axis_index+1] : {})
           },
-          value_keys: if drilldowns_num == 1
-                        self.axis_members[1].map { |t| [ t.property_value('MEMBER_KEY') ] }
-                      else
-                        self.axis_members[1].map { |t| t.map { |m| m.property_value('MEMBER_KEY') } }
-                      end,
+          cell_keys: if drilldowns_num > 1
+                       self.axis_members[1].map { |t| t.map { |m| m.property_value('MEMBER_KEY') } }
+                     elsif drilldowns_num == 1
+                       self.axis_members[1].map { |t| [ t.property_value('MEMBER_KEY') ] }
+                     else
+                       []
+                     end,
           values: self.values,
           mdx: debug ? self.mdx : nil
         }

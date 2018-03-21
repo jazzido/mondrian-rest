@@ -118,23 +118,10 @@ describe "Cube API" do
       expect(266773.0).to eq(JSON.parse(last_response.body)['values'][0])
     end
 
-    it "should aggregate on two dimensions of the Sales cube" do
+    it "should aggregate on three dimensions of the Sales cube" do
       get '/cubes/Sales/aggregate?drilldown[]=[Product].[Product Family]&drilldown[]=[Store%20Type].[Store%20Type]&drilldown[]=[Time].[Year]&measures[]=Store%20Sales'
-      #get '/cubes/Sales/aggregate?drilldown[]=[Product].[Product Family]&drilldown[]=[Store%20Type].[Store%20Type]&drilldown[]=[Time].[Year]&measures[]=Store%20Sales'
-      # exp = [[[[13487.16], [117088.87], [31486.21]],
-      #         [[3940.54], [33424.17], [8385.53]],
-      #         [[nil], [nil], [nil]],
-      #         [[2348.79], [17314.24], [4666.2]],
-      #         [[1142.61], [10175.3], [2568.47]],
-      #         [[27917.11], [231033.01], [60259.92]]],
-      #        [[[nil], [nil], [nil]],
-      #         [[nil], [nil], [nil]],
-      #         [[nil], [nil], [nil]],
-      #         [[nil], [nil], [nil]],
-      #         [[nil], [nil], [nil]],
-      #         [[nil], [nil], [nil]]]]
-      # expect(exp).to eq(JSON.parse(last_response.body)['values'])
-      puts last_response.body
+      exp = [[13487.16], [nil], [3940.54], [nil], [nil], [nil], [2348.79], [nil], [1142.61], [nil], [27917.11], [nil], [117088.87], [nil], [33424.17], [nil], [nil], [nil], [17314.24], [nil], [10175.3], [nil], [231033.01], [nil], [31486.21], [nil], [8385.53], [nil], [nil], [nil], [4666.2], [nil], [2568.47], [nil], [60259.92], [nil]]
+      expect(exp).to eq(JSON.parse(last_response.body)['values'])
     end
 
     it "should aggregate on the next level of the dimension in the cut" do
@@ -195,17 +182,17 @@ describe "Cube API" do
       get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&debug=true'
       r = JSON.parse(last_response.body)
       expect(r.has_key?('mdx')).to be(true)
-      expect(r['mdx']).to eq("SELECT {[Measures].[Store Sales]} ON COLUMNS,\n[Time].[Time].[Month].Members ON ROWS,\n[Customers].[Customers].[City].Members ON PAGES\nFROM [Sales]")
+      expect(r['mdx']).to eq("SELECT {[Measures].[Store Sales]} ON COLUMNS,\n[Time].[Time].[Month].Members * [Customers].[Customers].[City].Members ON ROWS\nFROM [Sales]")
     end
 
     it "should not include the generated MDX in the response if debug not given or if debug=false" do
       get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales'
       r = JSON.parse(last_response.body)
-      expect(r.has_key?('mdx')).to be(false)
+      expect(r['mdx']).to be(nil)
 
       get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&debug=false'
       r = JSON.parse(last_response.body)
-      expect(r.has_key?('mdx')).to be(false)
+      expect(r['mdx']).to be(nil)
     end
 
     it "should add the parents as columns to the CSV, if requested" do
@@ -290,8 +277,7 @@ describe "Cube API" do
     it "should add parents to the result of a raw MDX query" do
       mdx = <<-MDX
         SELECT {[Measures].[Store Sales]} ON COLUMNS,
-               TOPCOUNT(Time.Time.Month.Members, 10, [Measures].[Store Sales]) ON ROWS,
-               [Customers].[Customers].[City].Members ON PAGES
+               TOPCOUNT(Time.Time.Month.Members, 10, [Measures].[Store Sales]) * [Customers].[Customers].[City].Members ON ROWS
         FROM [Sales]
       MDX
 
@@ -315,6 +301,48 @@ describe "Cube API" do
 
       expect(last_response.body).to eql("")
     end
+
+    describe "Filter measures" do
+      it "should filter on single-clause valid filter expression" do
+
+        # get unfiltered aggregation
+        get '/cubes/Store/aggregate.csv?drilldown%5B%5D=%5BStore%5D.%5BStore+Country%5D&drilldown%5B%5D=%5BStore+Type%5D.%5BStore+Type%5D&measures%5B%5D=Grocery+Sqft&measures%5B%5D=Store+Sqft&sparse=true'
+        unfiltered_csv = CSV.parse(last_response.body)[1..-1]
+        expect(unfiltered_csv.map { |r| r[-1].to_f <= 50000 }.any?).to be(true)
+
+        # get filtered assertion
+        get '/cubes/Store/aggregate.csv?drilldown%5B%5D=%5BStore%5D.%5BStore+Country%5D&drilldown%5B%5D=%5BStore+Type%5D.%5BStore+Type%5D&measures%5B%5D=Grocery+Sqft&measures%5B%5D=Store+Sqft&filter%5B%5D=Store+Sqft+>+50000&sparse=true'
+
+        filtered_csv = CSV.parse(last_response.body)[1..-1]
+        expect(filtered_csv.map { |r| r[-1].to_f > 50000 }.all?).to be(true)
+
+        expect(unfiltered_csv.size).to be > filtered_csv.size
+      end
+
+      it "should filter on multiple-clause valid filter expression" do
+        # get filtered assertion
+        get '/cubes/Store/aggregate.csv?drilldown%5B%5D=%5BStore%5D.%5BStore+Country%5D&drilldown%5B%5D=%5BStore+Type%5D.%5BStore+Type%5D&measures%5B%5D=Grocery+Sqft&measures%5B%5D=Store+Sqft&filter%5B%5D=Store+Sqft+>+50000&filter%5B%5D=Grocery+Sqft+<+90000&sparse=true'
+
+        filtered_csv = CSV.parse(last_response.body)[1..-1]
+        expect(filtered_csv.map { |r| r[-2].to_f < 90000 && r[-1].to_f > 50000 }.all?).to be(true)
+      end
+
+      it "should error on a malformed filter expression" do
+
+        get '/cubes/Store/aggregate.csv?drilldown%5B%5D=%5BStore%5D.%5BStore+Country%5D&drilldown%5B%5D=%5BStore+Type%5D.%5BStore+Type%5D&measures%5B%5D=Grocery+Sqft&measures%5B%5D=Store+Sqft&filter%5B%5D=Store+Sqft+>&sparse=true'
+
+        expect(last_response.status).to eq(400)
+        expect(last_response.body).to eq("Filter clause Store Sqft > is invalid")
+      end
+
+      it "should error on a filter expression that refers to a measure that doesn't exist" do
+        get '/cubes/Store/aggregate?drilldown%5B%5D=%5BStore%5D.%5BStore+Country%5D&drilldown%5B%5D=%5BStore+Type%5D.%5BStore+Type%5D&measures%5B%5D=Grocery+Sqft&measures%5B%5D=Store+Sqft&filter%5B%5D=Invalid+measure+>+50000&sparse=true'
+
+        expect(last_response.status).to eq(400)
+        expect(JSON.parse(last_response.body)).to eq({"error" => "Invalid filter: measure Invalid measure does not exist"})
+      end
+    end
+
   end
 end
 

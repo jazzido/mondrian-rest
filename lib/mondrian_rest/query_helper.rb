@@ -2,6 +2,13 @@
 module Mondrian::REST
   module QueryHelper
 
+    VALID_FILTER_OPS = [
+      '>', '<', '>=', '<=', '=', '<>'
+    ]
+    VALID_FILTER_RE = /(?<measure>[a-zA-Z0-9\s]+)\s*(?<operand>#{VALID_FILTER_OPS.join("|")})\s*(?<value>-?\d+\.?\d*)/
+    FILTERED_MEASURE_PREFIX = "--MRFILTERED "
+
+
     def unparse_node(node)
       sw = java.io.StringWriter.new
       ptw = org.olap4j.mdx.ParseTreeWriter.new(sw)
@@ -138,6 +145,23 @@ module Mondrian::REST
       level
     end
 
+    def parse_measure_filter(cube, filter)
+      m = VALID_FILTER_RE.match(filter)
+      if m.nil?
+        error!("Filter clause #{filter} is invalid", 400)
+      end
+
+      unless cube.valid_measure?(m['measure'].strip)
+        error!("Invalid filter: measure #{m['measure'].strip} does not exist", 400)
+      end
+
+      {
+        :measure => m['measure'].strip,
+        :operand => m['operand'].strip,
+        :value => m['value'].strip
+      }
+    end
+
     def build_query(cube, options={})
 
       measure_members = cube.dimension('Measures').hierarchy.levels.first.members
@@ -146,7 +170,8 @@ module Mondrian::REST
         'drilldown' => [],
         'measures' => [measure_members.first.name],
         'nonempty' => false,
-        'distinct' => false
+        'distinct' => false,
+        'filter' => []
       }.merge(options)
 
       # validate measures exist
@@ -155,6 +180,8 @@ module Mondrian::REST
       options['measures'].each { |m|
         error!("Measure #{m} does not exist in cube #{cube.name}", 400) unless cm_names.include?(m)
       }
+
+      filters = options['filter'].map { |f| parse_measure_filter(cube, f) }
 
       # measures go in axis(0) of the resultset
       query = olap.from(cube.name)
@@ -212,8 +239,23 @@ module Mondrian::REST
         end
       end
 
-      # Cross join all the drilldowns
-      query = query.axis(axis_idx, dd.join(' * '))
+      if dd.size > 0
+        # Cross join all the drilldowns
+        axis_exp = dd.join(' * ')
+
+
+        # Apply filters
+        if filters.size > 0
+          filter_exp = filters.map { |f|  "[Measures].[#{org.olap4j.mdx.MdxUtil.mdxEncodeString(f[:measure])}] #{f[:operand]} #{f[:value]}"}.join(" AND ")
+          axis_exp = "FILTER(#{axis_exp}, #{filter_exp})"
+        end
+
+        # TODO Apply sorting
+        # TODO Apply pagination
+        query = query.axis(axis_idx, axis_exp)
+      end
+
+
       if options['distinct']
         query = query.distinct
       end

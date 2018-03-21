@@ -60,75 +60,23 @@ module Mondrian::REST::Formatters
       # append properties and measure columns and yield table header
       y.yield columns + pnames + pluck(measures, :name)
 
-      rs[:values].each_with_index do |row, i|
-        if add_parents
+      rs[:cell_keys].each_with_index do |row, i|
+        cm = row.each_with_index.map { |member_key, i| indexed_members[i+1][member_key] }
+        msrs = rs[:values][i]
+
+        if !add_parents
+          y.yield pluck(cm, :key).zip(pluck(cm, :caption)).flatten \
+                  + get_props(cm, pnames, props, dimensions) \
+                  + msrs
         else
-        end
-      end
-
-    end
-
-
-    Enumerator.new do |y|
-      dimensions.each do |dd|
-        if add_parents
-          hier = cube.dimension(dd[:name])
-                   .hierarchies
-                   .first # TODO: Support other hierarchies
-
-          level_has_all << hier.has_all?
-          slices << dd[:level_depth]
-
-          hier
-            .levels[(hier.has_all? ? 1 : 0)...dd[:level_depth]]
-            .each do |ancestor_level|
-
-            columns += ["ID #{ancestor_level.caption}", ancestor_level.caption]
-          end
-        end
-
-        columns += ["ID #{dd[:level]}", dd[:level]]
-      end
-
-      props = Mondrian::REST::APIHelpers.parse_properties(properties, dimensions)
-      pnames = properties.map { |p|
-        org.olap4j.mdx.IdentifierNode.parseIdentifier(p).getSegmentList.last.name
-      }
-
-      # append properties and measure columns and yield table header
-      y.yield columns + pnames + pluck(measures, :name)
-
-      prod = rs[:axes][1..-1].map { |e|
-        e[:members].map.with_index { |e_, i| [e_,i] }
-      }
-      values = rs[:values]
-
-      prod.shift.product(*prod).each do |cell|
-        cidxs = cell.map { |c,i| i }.reverse
-
-        cm = cell.map(&:first)
-
-        msrs = measures.map.with_index { |m, mi|
-          (cidxs + [mi]).reduce(values) { |_, idx| _[idx] }
-        }
-
-        next if sparse && msrs.all?(&:nil?)
-
-        if add_parents
           vdim = cm.each.with_index.reduce([]) { |cnames, (member, j)|
-            member[:ancestors][0...slices[j] - (level_has_all[j] ? 1 : 0)].reverse.each { |ancestor|
-              cnames += [ancestor[:key], ancestor[:caption]]
-            }
-            cnames += [member[:key], member[:caption]]
-          }
+                     member[:ancestors][0...slices[j] - (level_has_all[j] ? 1 : 0)].reverse.each { |ancestor|
+                       cnames += [ancestor[:key], ancestor[:caption]]
+                     }
+                     cnames += [member[:key], member[:caption]]
+                   }
 
           y.yield vdim + get_props(cm, pnames, props, dimensions) + msrs
-        else
-          row = pluck(cm, :key)
-                  .zip(pluck(cm, :caption))
-                  .flatten
-
-          y.yield row + get_props(cm, pnames, props, dimensions) + msrs
         end
       end
     end
