@@ -302,6 +302,41 @@ describe "Cube API" do
       expect(last_response.body).to eql("")
     end
 
+    describe "Ordering" do
+
+      it "should order on a measure, ascending" do
+        # get without order
+        get '/cubes/Store/aggregate.csv?drilldown%5B%5D=%5BStore%5D.%5BStore+Name%5D&drilldown%5B%5D=%5BStore+Type%5D.%5BStore+Type%5D&measures%5B%5D=Grocery+Sqft&measures%5B%5D=Store+Sqft&sparse=true&nonempty=true'
+        csv = CSV.parse(last_response.body)[1..-1].map { |r| r[-1] } # get the measure value
+        expect(csv[0..-2].zip(csv[1..-1]).map { |a| a[0].to_f <= a[1].to_f }.all?).to be(false)
+
+        # get with order
+        get '/cubes/Store/aggregate.csv?drilldown%5B%5D=%5BStore%5D.%5BStore+Name%5D&drilldown%5B%5D=%5BStore+Type%5D.%5BStore+Type%5D&measures%5B%5D=Grocery+Sqft&measures%5B%5D=Store+Sqft&sparse=true&order=Measures.%5BStore+Sqft%5D&order_desc=false&nonempty=true'
+        csv = CSV.parse(last_response.body)[1..-1].map { |r| r[-1] } # get the measure value
+
+        expect(csv[0..-2].zip(csv[1..-1]).map { |a| a[0].to_f <= a[1].to_f }.all?).to be(true)
+      end
+
+      it "should order a filtered aggregation" do
+        get '/cubes/Store/aggregate.csv?drilldown%5B%5D=%5BStore%5D.%5BStore+Country%5D&drilldown%5B%5D=%5BStore+Type%5D.%5BStore+Type%5D&measures%5B%5D=Grocery+Sqft&measures%5B%5D=Store+Sqft&filter%5B%5D=Store+Sqft+>+50000&sparse=true&order=Measures.%5BStore+Sqft%5D'
+
+        csv = CSV.parse(last_response.body)[1..-1].map { |r| r[-1] } # get the measure value
+        # assert filter
+        expect(csv.map { |r| r.to_f > 50000 }.all?).to be(true)
+        # assert order
+        expect(csv[0..-2].zip(csv[1..-1]).map { |a| a[0].to_f <= a[1].to_f }.all?).to be(true)
+      end
+
+      it "should error on an invalid measure" do
+        get '/cubes/Store/aggregate?drilldown%5B%5D=%5BStore%5D.%5BStore+Name%5D&drilldown%5B%5D=%5BStore+Type%5D.%5BStore+Type%5D&measures%5B%5D=Grocery+Sqft&measures%5B%5D=Store+Sqft&sparse=true&order=Measures.%5BBLEBLEH%5D&order_desc=false'
+        expect(last_response.status).to eq(400)
+        expect(JSON.parse(last_response.body)['error']).to eq("Invalid measure in order: BLEBLEH")
+        filtered_csv = CSV.parse(last_response.body)[1..-1]
+        expect(filtered_csv.map { |r| r[-1].to_f > 50000 }.all?).to be(true)
+      end
+
+    end
+
     describe "Filter measures" do
       it "should filter on single-clause valid filter expression" do
 

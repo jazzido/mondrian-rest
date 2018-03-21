@@ -144,6 +144,8 @@ module Mondrian::REST
             optional :properties, type: Array, desc: "Include member properties"
             optional :caption, type: Array, desc: "Replace caption with property", default: []
             optional :filter, type: Array, desc: "Filter by measure value. Accepts: #{Mondrian::REST::QueryHelper::VALID_FILTER_OPS.join(', ')}"
+            optional :order, type: String, desc: "Sort by measure or property name"
+            optional :order_desc, type: Boolean, desc: "Sort direction (true is descending)", default: false
           end
 
           get do

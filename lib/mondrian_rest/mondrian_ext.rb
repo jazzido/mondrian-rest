@@ -9,14 +9,17 @@ module Mondrian
         raw_cube.getSets
       end
 
-      def valid_measure?(name)
+      def measure(name)
         self.dimension('Measures')
           .hierarchy
           .levels
           .first
           .members
-          .map(&:name)
-          .include?(name)
+          .detect { |m| m.name == name }
+      end
+
+      def valid_measure?(name)
+        !self.measure(name).nil?
       end
 
       def to_h

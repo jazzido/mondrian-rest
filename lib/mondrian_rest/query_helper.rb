@@ -162,6 +162,28 @@ module Mondrian::REST
       }
     end
 
+    def parse_order(cube, order, order_desc)
+      begin
+        s = org.olap4j.mdx.IdentifierNode.parseIdentifier(order).getSegmentList.map(&:getName)
+      rescue Java::JavaLang::IllegalArgumentException
+        error!("Invalid order specification: #{order}", 400)
+      end
+
+      if s[0] == 'Measures'
+        if !cube.valid_measure?(s[1])
+          error!("Invalid measure in order: #{s[1]}", 400)
+        end
+
+        return {
+          :order => cube.measure(s[1]).full_name,
+          :type => :measure,
+          :desc => order_desc
+        }
+      else
+        raise "NotImplemented"
+      end
+    end
+
     def build_query(cube, options={})
 
       measure_members = cube.dimension('Measures').hierarchy.levels.first.members
@@ -171,7 +193,9 @@ module Mondrian::REST
         'measures' => [measure_members.first.name],
         'nonempty' => false,
         'distinct' => false,
-        'filter' => []
+        'filter' => [],
+        'order' => nil,
+        'order_desc' => false
       }.merge(options)
 
       # validate measures exist
@@ -243,14 +267,18 @@ module Mondrian::REST
         # Cross join all the drilldowns
         axis_exp = dd.join(' * ')
 
-
         # Apply filters
         if filters.size > 0
           filter_exp = filters.map { |f|  "[Measures].[#{org.olap4j.mdx.MdxUtil.mdxEncodeString(f[:measure])}] #{f[:operand]} #{f[:value]}"}.join(" AND ")
           axis_exp = "FILTER(#{axis_exp}, #{filter_exp})"
         end
 
-        # TODO Apply sorting
+        # TODO Apply ordering
+        if !options['order'].nil?
+          order = parse_order(cube, options['order'], options['order_desc'])
+          axis_exp = "ORDER(#{axis_exp}, #{order[:order]}, #{order[:desc] ? 'BDESC' : 'BASC'})"
+        end
+
         # TODO Apply pagination
         query = query.axis(axis_idx, axis_exp)
       end
