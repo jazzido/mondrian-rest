@@ -216,7 +216,6 @@ module Mondrian::REST
       if options['nonempty']
         query = query.nonempty
       end
-      axis_idx = 1
 
       query_axes = options['drilldown'].map { |dd| parse_drilldown(cube, dd) }
 
@@ -280,7 +279,7 @@ module Mondrian::REST
         end
 
         # TODO Apply pagination
-        query = query.axis(axis_idx, axis_exp)
+        query = query.axis(1, axis_exp)
       end
 
 
@@ -291,9 +290,6 @@ module Mondrian::REST
       if options['nonempty']
         query = query.nonempty
       end
-
-      axis_idx += 1
-
 
       # slicer axes (cut)
       if slicer_axis.size >= 1
