@@ -2,8 +2,6 @@ require_relative './formatters/aggregation_json'
 require_relative './formatters/csv'
 require_relative './formatters/excel'
 require_relative './formatters/jsonrecords'
-require_relative './formatters/jsonstat'
-
 
 module Mondrian::REST::Formatters
 
@@ -24,10 +22,51 @@ module Mondrian::REST::Formatters
     end
 
     measures = rs[:axes].first[:members]
-    dimensions = rs[:axis_dimensions][1..-1]
+    dimensions = rs[:axes][1..-1]
+
+    indexed_members = rs[:axes].map { |ax|
+      ax[:members].index_by { |m| m[:key] }
+    }
+
     columns = []
     slices = []
     level_has_all = []
+
+    Enumerator.new do |y|
+      dimensions.each do |dd|
+        if add_parents
+          hier = cube.dimension(dd[:name])
+                   .hierarchy(dd[:hierarchy])
+
+          level_has_all << hier.has_all?
+          slices << dd[:level_depth]
+
+          hier
+            .levels[(hier.has_all? ? 1 : 0)...dd[:level_depth]]
+            .each do |ancestor_level|
+
+            columns += ["ID #{ancestor_level.caption}", ancestor_level.caption]
+          end
+        end
+
+        columns += ["ID #{dd[:level]}", dd[:level]]
+      end
+
+      props = Mondrian::REST::APIHelpers.parse_properties(properties, dimensions)
+      pnames = properties.map { |p|
+        org.olap4j.mdx.IdentifierNode.parseIdentifier(p).getSegmentList.last.name
+      }
+
+      # append properties and measure columns and yield table header
+      y.yield columns + pnames + pluck(measures, :name)
+
+      rs[:values].each_with_index do |row, i|
+        if add_parents
+        else
+        end
+      end
+
+    end
 
 
     Enumerator.new do |y|
