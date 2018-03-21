@@ -16,8 +16,6 @@ Gem::Specification.new do |s|
   s.files         = `git ls-files`.split("\n").reject { |f| f =~ /^spec\// }
   s.require_paths = ["lib", "lib/jars"]
 
-  s.requirements << 'jar no.ssb.jsonstat:json-stat-java, 0.2.2'
-
   s.add_runtime_dependency 'mondrian-olap', ["~> 0.8.0"]
   s.add_runtime_dependency 'grape', '~> 1.0', '>= 1.0.0'
   s.add_runtime_dependency 'writeexcel', '~> 1.0', '>= 1.0.5'

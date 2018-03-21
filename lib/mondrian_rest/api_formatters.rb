@@ -29,6 +29,7 @@ module Mondrian::REST::Formatters
     slices = []
     level_has_all = []
 
+
     Enumerator.new do |y|
       dimensions.each do |dd|
         if add_parents

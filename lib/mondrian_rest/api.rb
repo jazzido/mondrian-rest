@@ -127,9 +127,6 @@ module Mondrian::REST
           content_type :jsonrecords, "application/x-jsonrecords"
           formatter :jsonrecords, Mondrian::REST::Formatters::JSONRecords
 
-          content_type :jsonstat, "application/x-jsonstat"
-          formatter :jsonstat, Mondrian::REST::Formatters::JSONStat
-
           rescue_from PropertyError do |e|
             error!({error: e}, 400)
           end

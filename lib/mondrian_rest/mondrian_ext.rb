@@ -204,8 +204,6 @@ module Mondrian
         # puts self.raw_cell_set.getFilterAxis.inspect
 
         drilldowns_num = self.raw_cell_set.getMetaData.getAxesMetaData[1].getHierarchies.size
-
-        ## TODO optimize
         dimensions = self.axis_members
                        .flatten
                        .map(&:dimension_info)
@@ -215,11 +213,12 @@ module Mondrian
         pprops = Mondrian::REST::APIHelpers.parse_properties(self.properties, dimensions[1..-1]) unless self.properties.nil?
         cprops = Mondrian::REST::APIHelpers.parse_caption_properties(self.caption_properties)
 
-        measure_axis = self.axis_members.flatten.first.to_h
+        measure_axis = self.axis_members.first.flatten.map(&:to_h)
+
         ms = if drilldowns_num == 1 then [self.axis_members[1]] else self.axis_members[1].transpose  end
 
-        rv = {
-          axes: [measure_axis] + ms.map { |a|
+        {
+          axes: [{members: measure_axis }.merge(dimensions[0])] + ms.each_with_index.map { |a, axis_index|
             {
               members: a.uniq(&:full_name).map { |m|
                 mh = m.to_h(
@@ -238,26 +237,16 @@ module Mondrian
                 end
                 mh
               }
-            }
+            }.merge(dimensions[axis_index+1])
           },
-          axis_dimensions: dimensions
-        }
-
-        puts "XXXXX"
-        puts self.values.inspect
-        puts "XXXXX"
-
-
-        rv[:values] = if drilldowns_num == 1
-                        self.values
+          value_keys: if drilldowns_num == 1
+                        self.axis_members[1].map { |t| [ t.property_value('MEMBER_KEY') ] }
                       else
-                        rv[:axes][1..-1]
-                          .map { |a| a[:members].size }
-                          .reduce(self.values) { |v, len| v.each_slice(len).to_a }
-                      end
-
-        rv[:mdx] = self.mdx if debug
-        rv
+                        self.axis_members[1].map { |t| t.map { |m| m.property_value('MEMBER_KEY') } }
+                      end,
+          values: self.values,
+          mdx: debug ? self.mdx : nil
+        }
       end
     end
   end
