@@ -339,16 +339,17 @@ describe "Cube API" do
         expect(JSON.parse(last_response.body)['error']).to eq("Invalid measure in order: BLEBLEH")
       end
 
-      it "should order on a member's method, descending" do
-        get '/cubes/Store/aggregate?drilldown%5B%5D=%5BStore%5D.%5BStore+Name%5D&drilldown%5B%5D=%5BStore+Type%5D.%5BStore+Type%5D&measures%5B%5D=Grocery+Sqft&measures%5B%5D=Store+Sqft&sparse=true&order=%5BStore%5D.%5BStore+Name%5D.Caption&order_desc=true'
-        puts last_response.body
-        # XXX TODO
+      it "should order on a member's method, ascending" do
+        get '/cubes/Store/aggregate.csv?drilldown%5B%5D=%5BStore%5D.%5BStore+Name%5D&drilldown%5B%5D=%5BStore+Type%5D.%5BStore+Type%5D&measures%5B%5D=Grocery+Sqft&measures%5B%5D=Store+Sqft&sparse=true&order=%5BStore%5D.%5BStore+Name%5D.Caption&order_desc=false'
+        csv = CSV.parse(last_response.body)[1..-1].map { |r| r[1] } # get the caption value
+        expect(csv[0..-2].zip(csv[1..-1]).map { |a| a[0] <= a[1] }.all?).to be(true)
       end
 
       it "should order on a member's property, descending" do
         get '/cubes/Store/aggregate.csv?drilldown%5B%5D=%5BStore%5D.%5BStore+Name%5D&drilldown%5B%5D=%5BStore+Type%5D.%5BStore+Type%5D&measures%5B%5D=Grocery+Sqft&measures%5B%5D=Store+Sqft&sparse=true&order=%5BStore%5D.%5BStore Name%5D.%5BStreet address%5D&order_desc=true&properties[]=%5BStore%5D.%5BStore Name%5D.%5BStreet address%5D&nonempty=true'
-        puts last_response.body
-        # XXX TODO
+
+        csv = CSV.parse(last_response.body)[1..-1].map { |r| r[-3] } # get the property value
+        expect(csv[0..-2].zip(csv[1..-1]).map { |a| a[0] >= a[1] }.all?).to be(true)
       end
 
       it "should error on an invalid member property" do
