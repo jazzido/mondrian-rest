@@ -23,7 +23,6 @@ module Mondrian
       end
 
       def level(*parts)
-        puts parts.inspect
         dim = self.dimension(parts[0])
         hier = if parts.size > 2
                  dim.hierarchy(parts[1])
@@ -265,14 +264,11 @@ module Mondrian
                   (cprops.dig(m.raw_member.getDimension.name, m.raw_level.name) || [[]])[0][-1]
                 )
                 if parents
-                  mh.merge!({
-                              ancestors: m.ancestors.map { |ma|
-                                ma.to_h(
-                                  pprops.dig(ma.raw_member.getDimension.name, ma.raw_level.name) || [],
-                                  (cprops.dig(ma.raw_member.getDimension.name, ma.raw_level.name) || [[]])[0][-1]
-                                )
-                              }
-                            })
+                  mh[:ancestors] = m.ancestors.map { |ma|
+                    ma.to_h(
+                      pprops.dig(ma.raw_member.getDimension.name, ma.raw_level.name) || [],
+                      (cprops.dig(ma.raw_member.getDimension.name, ma.raw_level.name) || [[]])[0][-1])
+                  }
                 end
                 mh
               }

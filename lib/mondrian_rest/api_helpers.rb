@@ -72,7 +72,7 @@ module Mondrian::REST
 
       hier = unless params[:hierarchy_name].nil?
                h = dimension.hierarchy(params[:hierarchy_name])
-               error!("Hierarychy #{params[:hierarchy_name]} does not exist in dimension #{params[:dimension_name]}", 404) if h.nil?
+               error!("Hierarchy #{params[:hierarchy_name]} does not exist in dimension #{params[:dimension_name]}", 404) if h.nil?
                h
              else
                dimension.hierarchies.first
