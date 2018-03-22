@@ -1,13 +1,13 @@
 # coding: utf-8
+
 module Mondrian::REST
   module QueryHelper
 
     VALID_FILTER_OPS = [
       '>', '<', '>=', '<=', '=', '<>'
-    ]
+    ].freeze
     VALID_FILTER_RE = /(?<measure>[a-zA-Z0-9\s]+)\s*(?<operand>#{VALID_FILTER_OPS.join("|")})\s*(?<value>-?\d+\.?\d*)/
-    FILTERED_MEASURE_PREFIX = "--MRFILTERED "
-
+    MEMBER_METHODS = ['Caption', 'Key', 'Name', 'UniqueName'].freeze
 
     def unparse_node(node)
       sw = java.io.StringWriter.new
@@ -25,11 +25,9 @@ module Mondrian::REST
     end
 
     def get_member(cube, member_exp)
-      begin
-        return cube.member(member_exp)
-      rescue Java::JavaLang::IllegalArgumentException
-        error!("Illegal expression: #{member_exp}", 400)
-      end
+      cube.member(member_exp)
+    rescue Java::JavaLang::IllegalArgumentException
+      error!("Illegal expression: #{member_exp}", 400)
     end
 
     def get_named_set(cube, named_set_exp)
@@ -46,7 +44,7 @@ module Mondrian::REST
       case p
       when org.olap4j.mdx.CallNode
         case p.getOperatorName
-        when "{}"
+        when '{}'
           # check that the set contains only Members of a single dimension level
           set_members = p.getArgList.map { |id_node|
             get_member(cube, unparse_node(id_node))
@@ -147,9 +145,8 @@ module Mondrian::REST
 
     def parse_measure_filter(cube, filter)
       m = VALID_FILTER_RE.match(filter)
-      if m.nil?
-        error!("Filter clause #{filter} is invalid", 400)
-      end
+
+      error!("Filter clause #{filter} is invalid", 400) if m.nil?
 
       unless cube.valid_measure?(m['measure'].strip)
         error!("Invalid filter: measure #{m['measure'].strip} does not exist", 400)
@@ -170,22 +167,37 @@ module Mondrian::REST
       end
 
       if s[0] == 'Measures'
-        if !cube.valid_measure?(s[1])
-          error!("Invalid measure in order: #{s[1]}", 400)
-        end
+        error!("Invalid measure in order: #{s[1]}", 400) unless cube.valid_measure?(s[1])
 
         return {
-          :order => cube.measure(s[1]).full_name,
-          :type => :measure,
-          :desc => order_desc
+          order: cube.measure(s[1]).full_name,
+          desc: order_desc
         }
-      else
-        raise "NotImplemented"
+      else # ordering by a property
+        # we need at least dim.level.property
+        error!("Invalid order: specify at least [Dimension].[Level].[Property]", 400) if s.size < 3
+
+        lvl = cube.level(*s[0..-2])
+        error!("Invalid order: level #{s[0..-2].join('.')} not found", 400) if lvl.nil?
+
+        last = if MEMBER_METHODS.include?(s.last)
+                 s.last
+               else
+                 prop = lvl.property(s[-1])
+                 error!("Invalid order: property #{order} not found", 400) if prop.nil?
+                 "Properties('#{s.last}')"
+               end
+
+        return {
+          order: s[0..-2].map { |n|
+            Java::MondrianOlap::Util.quoteMdxIdentifier(n)
+          }.join('.') + ".CurrentMember." + last,
+          desc: order_desc
+        }
       end
     end
 
-    def build_query(cube, options={})
-
+    def build_query(cube, options = {})
       measure_members = cube.dimension('Measures').hierarchy.levels.first.members
       options = {
         'cut' => [],
@@ -195,7 +207,9 @@ module Mondrian::REST
         'distinct' => false,
         'filter' => [],
         'order' => nil,
-        'order_desc' => false
+        'order_desc' => false,
+        'offset' => nil,
+        'limit' => nil
       }.merge(options)
 
       # validate measures exist
@@ -272,13 +286,21 @@ module Mondrian::REST
           axis_exp = "FILTER(#{axis_exp}, #{filter_exp})"
         end
 
-        # TODO Apply ordering
-        if !options['order'].nil?
+        unless options['order'].nil?
           order = parse_order(cube, options['order'], options['order_desc'])
           axis_exp = "ORDER(#{axis_exp}, #{order[:order]}, #{order[:desc] ? 'BDESC' : 'BASC'})"
         end
 
         # TODO Apply pagination
+        unless options['offset'].nil?
+          if options['limit'].nil?
+            axis_exp = "SUBSET(#{axis_exp}, #{options['offset']})"
+          else
+            axis_exp = "SUBSET(#{axis_exp}, #{options['offset']}, #{options['limit']})"
+          end
+        end
+
+
         query = query.axis(1, axis_exp)
       end
 

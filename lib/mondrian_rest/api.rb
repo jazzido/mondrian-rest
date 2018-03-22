@@ -146,6 +146,8 @@ module Mondrian::REST
             optional :filter, type: Array, desc: "Filter by measure value. Accepts: #{Mondrian::REST::QueryHelper::VALID_FILTER_OPS.join(', ')}"
             optional :order, type: String, desc: "Sort by measure or property name"
             optional :order_desc, type: Boolean, desc: "Sort direction (true is descending)", default: false
+            optional :offset, type: Integer, desc: "Offset this resultset"
+            optional :limit, type: Integer, desc: "Limit number of results"
           end
 
           get do
@@ -171,6 +173,26 @@ module Mondrian::REST
               dimension.to_h(get_members: true)
             end
 
+            resource :hierarchies do
+              route_param :hierarchy_name do
+                resource :levels do
+                  route_param :level_name do
+                    resource :members do
+                      params do
+                        optional :member_properties, type: Array, default: []
+                        optional :caption, type: String, desc: "Replace caption with property", default: nil
+                        optional :children, type: Boolean, default: false
+                      end
+
+                      get do
+                        get_members(params)
+                      end
+                    end
+                  end
+                end
+              end
+            end
+
             resource :levels do
               route_param :level_name do
                 resource :members do
@@ -182,22 +204,7 @@ module Mondrian::REST
                   end
 
                   get do
-                    cube = get_cube_or_404(params[:cube_name])
-
-                    dimension = cube.dimension(params[:dimension_name])
-                    if dimension.nil?
-                      error!("dimension #{params[:dimension_name]} not found in cube #{params[:cube_name]}", 404)
-                    end
-
-                    level = dimension.hierarchies[0].level(params[:level_name])
-                    if level.nil?
-                      error!("level #{params[:level_name]} not found in dimension #{params[:dimension_name]}")
-                    end
-
-                    level.to_h(member_properties: params[:member_properties],
-                               get_children: params[:children],
-                               member_caption: params[:caption],
-                               get_members: true)
+                    get_members(params)
                   end
 
                   route_param :member_key,

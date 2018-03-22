@@ -63,6 +63,12 @@ describe "Cube API" do
       expect(res['members'].map { |m| m['properties' ]}).to all(have_key('Street address').and have_key('Has coffee bar'))
     end
 
+    it "should return the members of a level of a non-default hierarchy" do
+      get '/cubes/Sales/dimensions/Time/hierarchies/Weekly/levels/Week/members'
+      expect(last_response.status).to eq(200)
+      # XXX TODO better assertions
+    end
+
 
     it "should return the members of a dimension level and replace their caption with the requested property" do
       get '/cubes/Sales/dimensions/Store/levels/Store%20Name/members?member_properties[]=Street%20address&member_properties[]=Has%20coffee%20bar&caption=Street%20address'
@@ -322,7 +328,7 @@ describe "Cube API" do
 
         csv = CSV.parse(last_response.body)[1..-1].map { |r| r[-1] } # get the measure value
         # assert filter
-        expect(csv.map { |r| r.to_f > 50000 }.all?).to be(true)
+        expect(csv.map { |r| r.to_f > 50_000 }.all?).to be(true)
         # assert order
         expect(csv[0..-2].zip(csv[1..-1]).map { |a| a[0].to_f <= a[1].to_f }.all?).to be(true)
       end
@@ -331,10 +337,25 @@ describe "Cube API" do
         get '/cubes/Store/aggregate?drilldown%5B%5D=%5BStore%5D.%5BStore+Name%5D&drilldown%5B%5D=%5BStore+Type%5D.%5BStore+Type%5D&measures%5B%5D=Grocery+Sqft&measures%5B%5D=Store+Sqft&sparse=true&order=Measures.%5BBLEBLEH%5D&order_desc=false'
         expect(last_response.status).to eq(400)
         expect(JSON.parse(last_response.body)['error']).to eq("Invalid measure in order: BLEBLEH")
-        filtered_csv = CSV.parse(last_response.body)[1..-1]
-        expect(filtered_csv.map { |r| r[-1].to_f > 50000 }.all?).to be(true)
       end
 
+      it "should order on a member's method, descending" do
+        get '/cubes/Store/aggregate?drilldown%5B%5D=%5BStore%5D.%5BStore+Name%5D&drilldown%5B%5D=%5BStore+Type%5D.%5BStore+Type%5D&measures%5B%5D=Grocery+Sqft&measures%5B%5D=Store+Sqft&sparse=true&order=%5BStore%5D.%5BStore+Name%5D.Caption&order_desc=true'
+        puts last_response.body
+        # XXX TODO
+      end
+
+      it "should order on a member's property, descending" do
+        get '/cubes/Store/aggregate.csv?drilldown%5B%5D=%5BStore%5D.%5BStore+Name%5D&drilldown%5B%5D=%5BStore+Type%5D.%5BStore+Type%5D&measures%5B%5D=Grocery+Sqft&measures%5B%5D=Store+Sqft&sparse=true&order=%5BStore%5D.%5BStore Name%5D.%5BStreet address%5D&order_desc=true&properties[]=%5BStore%5D.%5BStore Name%5D.%5BStreet address%5D&nonempty=true'
+        puts last_response.body
+        # XXX TODO
+      end
+
+      it "should error on an invalid member property" do
+        get '/cubes/Store/aggregate?drilldown%5B%5D=%5BStore%5D.%5BStore+Name%5D&drilldown%5B%5D=%5BStore+Type%5D.%5BStore+Type%5D&measures%5B%5D=Grocery+Sqft&measures%5B%5D=Store+Sqft&sparse=true&order=%5BStore%5D.%5BStore Name%5D.%5BDOES+NOT+EXIST%5D&order_desc=true&properties[]=%5BStore%5D.%5BStore Name%5D.%5BStreet address%5D&nonempty=true'
+        expect(last_response.status).to eq(400)
+        expect(JSON.parse(last_response.body)['error']).to eq("Invalid order: property [Store].[Store Name].[DOES NOT EXIST] not found")
+      end
     end
 
     describe "Filter measures" do
@@ -378,6 +399,13 @@ describe "Cube API" do
       end
     end
 
+    describe "Offset/Limit" do
+      it "should take the first 5 elements" do
+        get '/cubes/Sales/aggregate.csv?drilldown[]=Time.Year&drilldown[]=Customers.City&measures[]=Store%20Sales&offset=0&limit=10&order=[Customers].[Customers].[City].Caption'
+
+        puts last_response.body
+        # XXX TODO assertions
+      end
+    end
   end
 end
-

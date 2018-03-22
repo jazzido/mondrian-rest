@@ -22,6 +22,17 @@ module Mondrian
         !self.measure(name).nil?
       end
 
+      def level(*parts)
+        puts parts.inspect
+        dim = self.dimension(parts[0])
+        hier = if parts.size > 2
+                 dim.hierarchy(parts[1])
+               else
+                 dim.hierarchies[0]
+               end
+        hier.level(parts.last)
+      end
+
       def to_h
         # gather named sets
         named_sets = self.named_sets
@@ -139,6 +150,10 @@ module Mondrian
         @raw_level.properties.select { |p|
           !INTERNAL_PROPS.include?(p.name)
         }
+      end
+
+      def property(name)
+        self.raw_level.getProperties.asMap[name]
       end
 
     end
