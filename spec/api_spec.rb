@@ -400,11 +400,25 @@ describe "Cube API" do
     end
 
     describe "Offset/Limit" do
-      it "should take the first 5 elements" do
-        get '/cubes/Sales/aggregate.csv?drilldown[]=Time.Year&drilldown[]=Customers.City&measures[]=Store%20Sales&offset=0&limit=10&order=[Customers].[Customers].[City].Caption'
+      it "should take the first 10 elements" do
 
-        puts last_response.body
-        # XXX TODO assertions
+        # get without limit
+        get '/cubes/Sales/aggregate.csv?drilldown[]=Time.Year&drilldown[]=Customers.City&measures[]=Store%20Sales&order=[Customers].[Customers].[City].Caption'
+        no_limit_csv = CSV.parse(last_response.body)
+
+
+        # get with limit
+        get '/cubes/Sales/aggregate.csv?drilldown[]=Time.Year&drilldown[]=Customers.City&measures[]=Store%20Sales&offset=0&limit=10&order=[Customers].[Customers].[City].Caption'
+        limit_csv = CSV.parse(last_response.body)
+
+        expect(no_limit_csv[0...11]).to eq(limit_csv)
+
+      end
+
+      it "should return an empty resultset when offset is > rowcount" do
+        get '/cubes/Sales/aggregate?drilldown[]=Time.Year&drilldown[]=Customers.City&measures[]=Store%20Sales&offset=20000&limit=10&order=[Customers].[Customers].[City].Caption'
+
+        expect(JSON.parse(last_response.body)['values']).to be_empty
       end
     end
   end
