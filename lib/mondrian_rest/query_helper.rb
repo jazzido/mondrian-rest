@@ -136,7 +136,6 @@ module Mondrian::REST
 
     def parse_measure_filter(cube, filter)
       m = VALID_FILTER_RE.match(filter)
-
       error!("Filter clause #{filter} is invalid", 400) if m.nil?
 
       unless cube.valid_measure?(m['measure'].strip)

@@ -80,6 +80,7 @@ describe "Cube API" do
     it "should return the members of a dimension level along with their children" do
       get '/cubes/Sales/dimensions/Store/levels/Store%20City/members?children=true'
       res = JSON.parse(last_response.body)
+
       # TODO add assertions
     end
 
