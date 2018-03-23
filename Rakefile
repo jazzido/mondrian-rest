@@ -13,8 +13,8 @@ desc "API Routes"
 task :routes do
   require_relative './lib/mondrian_rest.rb'
   Mondrian::REST::Api.routes.each do |api|
-    method = api.route_method.ljust(10)
-    path = api.route_path
+    method = api.request_method.ljust(10)
+    path = api.path
     puts "     #{method} #{path}"
   end
 end

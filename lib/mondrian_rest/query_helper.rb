@@ -1,12 +1,11 @@
 # coding: utf-8
 module Mondrian::REST
   module QueryHelper
-
     VALID_FILTER_OPS = [
       '>', '<', '>=', '<=', '=', '<>'
-    ]
+    ].freeze
     VALID_FILTER_RE = /(?<measure>[a-zA-Z0-9\s]+)\s*(?<operand>#{VALID_FILTER_OPS.join("|")})\s*(?<value>-?\d+\.?\d*)/
-    FILTERED_MEASURE_PREFIX = "--MRFILTERED "
+    MEMBER_METHODS = %w[Caption Key Name UniqueName].freeze
 
     def unparse_node(node)
       sw = java.io.StringWriter.new
@@ -17,18 +16,16 @@ module Mondrian::REST
 
     def get_dimension(cube, dname)
       cube_dimensions = cube.dimensions
-                        .find_all { |d| d.dimension_type != :measures }
+                            .find_all { |d| d.dimension_type != :measures }
       dim = cube_dimensions.find { |d| d.name == dname }
       error!("Dimension #{dname} does not exist", 400) if dim.nil?
       dim
     end
 
     def get_member(cube, member_exp)
-      begin
-        return cube.member(member_exp)
-      rescue Java::JavaLang::IllegalArgumentException
-        error!("Illegal expression: #{member_exp}", 400)
-      end
+      cube.member(member_exp)
+    rescue Java::JavaLang::IllegalArgumentException
+      error!("Illegal expression: #{member_exp}", 400)
     end
 
     def get_named_set(cube, named_set_exp)
@@ -45,48 +42,42 @@ module Mondrian::REST
       case p
       when org.olap4j.mdx.CallNode
         case p.getOperatorName
-        when "{}"
+        when '{}'
           # check that the set contains only Members of a single dimension level
-          set_members = p.getArgList.map { |id_node|
+          set_members = p.getArgList.map do |id_node|
             get_member(cube, unparse_node(id_node))
-          }
+          end
 
-          if set_members.any? { |m| m.nil? }
-            error!("Illegal cut. Unknown member in cut set", 400)
+          if set_members.any?(&:nil?)
+            error!('Illegal cut. Unknown member in cut set', 400)
           end
 
           ls = set_members.map(&:raw_level).uniq
-          unless ls.size == 1
-            error!("Illegal cut: " + cut_expr, 400)
-          end
+          error!('Illegal cut: ' + cut_expr, 400) unless ls.size == 1
           { level: ls.first, cut: unparse_node(p), type: :set, set_members: set_members }
-        when "()"
+        when '()'
           # check that the range contains a valid range
 
           unless p.getArgList.first.is_a?(org.olap4j.mdx.CallNode) \
-            and p.getArgList.first.getOperatorName == ':'
-            error!("Illegal cut: " + cut_expr, 400)
+            && (p.getArgList.first.getOperatorName == ':')
+            error!('Illegal cut: ' + cut_expr, 400)
           end
 
-          ls = p.getArgList.first.getArgList.map { |id_node|
+          ls = p.getArgList.first.getArgList.map do |id_node|
             get_member(cube, unparse_node(id_node)).raw_level
-          }.uniq
+          end.uniq
 
-          unless ls.size == 1
-            error!("Illegal cut: " + cut_expr, 400)
-          end
+          error!('Illegal cut: ' + cut_expr, 400) unless ls.size == 1
 
           { level: ls.first, cut: unparse_node(p), type: :range }
         else
-          error!("Illegal cut: " + cut_expr, 400)
+          error!('Illegal cut: ' + cut_expr, 400)
         end
       when org.olap4j.mdx.IdentifierNode
 
         # does cut_expr look like a NamedSet?
         s = get_named_set(cube, cut_expr)
-        if !s.nil?
-          return { level: nil, cut: cut_expr, type: :named_set }
-        end
+        return { level: nil, cut: cut_expr, type: :named_set } unless s.nil?
 
         # if `cut_expr` looks like a member, check that it's level is
         # equal to `level`
@@ -98,7 +89,7 @@ module Mondrian::REST
 
         { level: m.raw_level, cut: cut_expr, type: :member }
       else
-        error!("Illegal cut: " + cut_expr, 400)
+        error!('Illegal cut: ' + cut_expr, 400)
       end
     end
 
@@ -106,10 +97,9 @@ module Mondrian::REST
     # Parses a drilldown specification
     # XXX TODO write doc
     def parse_drilldown(cube, drilldown)
-
       # check if the drilldown is a named set
       named_sets = cube.named_sets
-      if ns = named_sets.find { |ns| ns.name == drilldown }
+      if (ns = named_sets.find { |ns| ns.name == drilldown })
         return ns
       end
 
@@ -146,23 +136,58 @@ module Mondrian::REST
 
     def parse_measure_filter(cube, filter)
       m = VALID_FILTER_RE.match(filter)
-      if m.nil?
-        error!("Filter clause #{filter} is invalid", 400)
-      end
+      error!("Filter clause #{filter} is invalid", 400) if m.nil?
 
-      unless cube.valid_measure?(m['measure'])
+      unless cube.valid_measure?(m['measure'].strip)
         error!("Invalid filter: measure #{m['measure'].strip} does not exist", 400)
       end
 
       {
-        :measure => m['measure'].strip,
-        :operand => m['operand'].strip,
-        :value => m['value'].strip
+        measure: m['measure'].strip,
+        operand: m['operand'].strip,
+        value: m['value'].strip
       }
     end
 
-    def build_query(cube, options={})
+    def parse_order(cube, order, order_desc)
+      begin
+        s = org.olap4j.mdx.IdentifierNode.parseIdentifier(order).getSegmentList.map(&:getName)
+      rescue Java::JavaLang::IllegalArgumentException
+        error!("Invalid order specification: #{order}", 400)
+      end
 
+      if s[0] == 'Measures'
+        error!("Invalid measure in order: #{s[1]}", 400) unless cube.valid_measure?(s[1])
+
+        return {
+          order: cube.measure(s[1]).full_name,
+          desc: order_desc
+        }
+      else # ordering by a property
+        # we need at least dim.level.property
+        error!('Invalid order: specify at least [Dimension].[Level].[Property]', 400) if s.size < 3
+
+        lvl = cube.level(*s[0..-2])
+        error!("Invalid order: level #{s[0..-2].join('.')} not found", 400) if lvl.nil?
+
+        last = if MEMBER_METHODS.include?(s.last)
+                 s.last
+               else
+                 prop = lvl.property(s[-1])
+                 error!("Invalid order: property #{order} not found", 400) if prop.nil?
+                 "Properties('#{s.last}')"
+               end
+
+        return {
+          order: s[0..-2].map do |n|
+            Java::MondrianOlap::Util.quoteMdxIdentifier(n)
+          end.join('.') + '.CurrentMember.' + last,
+          desc: order_desc
+        }
+      end
+    end
+
+    def build_query(cube, options = {})
       measure_members = cube.dimension('Measures').hierarchy.levels.first.members
       options = {
         'cut' => [],
@@ -170,53 +195,40 @@ module Mondrian::REST
         'measures' => [measure_members.first.name],
         'nonempty' => false,
         'distinct' => false,
-        'filter' => []
+        'filter' => [],
+        'order' => nil,
+        'order_desc' => false,
+        'offset' => nil,
+        'limit' => nil
       }.merge(options)
 
       # validate measures exist
-      options['measures'].each { |m|
-        error!("Measure #{m} does not exist in cube #{cube.name}", 400) unless cube.valid_measure?(m)
-      }
+      cm_names = measure_members.map(&:name)
 
-      # create query object
-      query = olap.from(cube.name)
+      options['measures'].each do |m|
+        error!("Measure #{m} does not exist in cube #{cube.name}", 400) unless cm_names.include?(m)
+      end
 
       filters = options['filter'].map { |f| parse_measure_filter(cube, f) }
 
-      query = if filters.size > 0
-                # build IIF clause
-                iif = filters.map { |f|  "Measures.[#{org.olap4j.mdx.MdxUtil.mdxEncodeString(f[:measure])}] #{f[:operand]} #{f[:value]}"}.join(" AND ")
-                options['measures'].reduce(query) { |query, measure|
-                  query
-                    .with_member("Measures.[#{FILTERED_MEASURE_PREFIX}#{org.olap4j.mdx.MdxUtil.mdxEncodeString(measure)}]")
-                    .as("IIF(#{iif}, [#{org.olap4j.mdx.MdxUtil.mdxEncodeString(measure)}], NULL)")
-                }
+      # measures go in axis(0) of the resultset
+      query = olap.from(cube.name)
                   .axis(0,
-                        options['measures'].map { |m| "Measures.[#{FILTERED_MEASURE_PREFIX}#{org.olap4j.mdx.MdxUtil.mdxEncodeString(m)}]"})
-              else
-                query
-                  .axis(0,
-                        *options['measures'].map { |m|
+                        *options['measures'].map do |m|
                           measure_members.find { |cm| cm.name == m }.full_name
-                        })
-              end
-
-      if options['nonempty']
-        query = query.nonempty
-      end
-      axis_idx = 1
+                        end)
+      query = query.nonempty if options['nonempty']
 
       query_axes = options['drilldown'].map { |dd| parse_drilldown(cube, dd) }
 
-      slicer_axis = options['cut'].reduce({}) { |h, cut_expr|
+      slicer_axis = options['cut'].each_with_object({}) do |cut_expr, h|
         pc = parse_cut(cube, cut_expr)
         h[pc[:level]] = pc
-        h
-      }
+      end
 
       dd = query_axes.map do |qa|
         # if drilling down on a named set
-        if qa.kind_of?(Java::MondrianOlap4j::MondrianOlap4jNamedSet)
+        if qa.is_a?(Java::MondrianOlap4j::MondrianOlap4jNamedSet)
           "[#{qa.name}]"
         # there's a slice (cut) on this axis
         elsif slicer_axis[qa.raw_level]
@@ -227,10 +239,10 @@ module Mondrian::REST
           else
             cut[:cut]
           end
-        elsif cut = slicer_axis.find { |lvl, cut|
+        elsif cut = slicer_axis.find do |lvl, cut|
                 next if cut[:type] == :named_set
                 qa.raw_level.hierarchy == lvl.hierarchy && lvl.depth < qa.depth
-              }
+              end
           slicer_axis.delete(cut[0])
           cut = cut[1]
 
@@ -239,43 +251,58 @@ module Mondrian::REST
             "DESCENDANTS(#{cut[:cut]}, #{qa.unique_name})"
           when :set
             # TODO
-            "{" + cut[:set_members].map { |m|
+            '{' + cut[:set_members].map do |m|
               "DESCENDANTS(#{m.full_name}, #{qa.unique_name})"
-            }.join(",") + "}"
+            end.join(',') + '}'
           when :range
             # TODO
-            raise "Unsupported operation"
+            raise 'Unsupported operation'
           end
         else
           qa.unique_name + '.Members'
         end
       end
 
-      # query axes (drilldown)
-      dd.each do |ds|
-        query = query.axis(axis_idx,
-                           ds)
+      unless dd.empty?
+        # Cross join all the drilldowns
+        axis_exp = dd.join(' * ')
 
-        if options['distinct']
-          query = query.distinct
+        # Apply filters
+        unless filters.empty?
+          filter_exp = filters.map { |f| "[Measures].[#{org.olap4j.mdx.MdxUtil.mdxEncodeString(f[:measure])}] #{f[:operand]} #{f[:value]}" }.join(' AND ')
+          axis_exp = "FILTER(#{axis_exp}, #{filter_exp})"
         end
 
-        if options['nonempty']
-          query = query.nonempty
+        unless options['order'].nil?
+          order = parse_order(cube, options['order'], options['order_desc'])
+          axis_exp = "ORDER(#{axis_exp}, #{order[:order]}, #{order[:desc] ? 'BDESC' : 'BASC'})"
         end
 
-        axis_idx += 1
+        # TODO: Apply pagination
+        unless options['offset'].nil?
+          axis_exp = if options['limit'].nil?
+                       "SUBSET(#{axis_exp}, #{options['offset']})"
+                     else
+                       "SUBSET(#{axis_exp}, #{options['offset']}, #{options['limit']})"
+                     end
+        end
+
+        query = query.axis(1, axis_exp)
       end
+
+      query = query.distinct if options['distinct']
+
+      query = query.nonempty if options['nonempty']
 
       # slicer axes (cut)
       if slicer_axis.size >= 1
-        query = query.where(slicer_axis.values.map { |v|
+        query = query.where(slicer_axis.values.map do |v|
                               if v[:type] == :named_set
                                 "[#{v[:cut]}]"
                               else
                                 v[:cut]
                               end
-                            }.join(' * '))
+                            end.join(' * '))
       end
       query
     end

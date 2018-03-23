@@ -9,13 +9,27 @@ module Mondrian
         raw_cube.getSets
       end
 
-      def valid_measure?(name)
+      def measure(name)
         self.dimension('Measures')
           .hierarchy
-          .levels.first
+          .levels
+          .first
           .members
-          .map(&:name)
-          .include?(name)
+          .detect { |m| m.name == name }
+      end
+
+      def valid_measure?(name)
+        !self.measure(name).nil?
+      end
+
+      def level(*parts)
+        dim = self.dimension(parts[0])
+        hier = if parts.size > 2
+                 dim.hierarchy(parts[1])
+               else
+                 dim.hierarchies[0]
+               end
+        hier.level(parts.last)
       end
 
       def to_h
@@ -137,22 +151,15 @@ module Mondrian
         }
       end
 
+      def property(name)
+        self.raw_level.getProperties.asMap[name]
+      end
+
     end
 
     class Member
 
       alias_method :_caption, :caption
-      alias_method :_name, :name
-      alias_method :_full_name, :full_name
-
-
-      def is_measure?
-        self.dimension_type == :measures
-      end
-
-      def is_filtered_measure?
-        self.is_measure? && self._name.start_with?(Mondrian::REST::QueryHelper::FILTERED_MEASURE_PREFIX)
-      end
 
       def raw_level
         @raw_member.getLevel
@@ -180,19 +187,9 @@ module Mondrian
         Hash[kv]
       end
 
-      def full_name
-        is_filtered_measure? ? self._full_name.sub(Mondrian::REST::QueryHelper::FILTERED_MEASURE_PREFIX, "") : self._full_name
-      end
-
-      def name
-        is_filtered_measure? ? self._name.sub(Mondrian::REST::QueryHelper::FILTERED_MEASURE_PREFIX, "") : self._name
-      end
-
       def pcaption(caption_property=nil)
         if caption_property
           self.property_value(caption_property)
-        elsif self.is_filtered_measure?
-          self._caption.sub(Mondrian::REST::QueryHelper::FILTERED_MEASURE_PREFIX, "")
         else
           self._caption
         end
@@ -201,13 +198,15 @@ module Mondrian
       def dimension_info
         d = @raw_member.getDimension()
         l = @raw_member.getLevel()
+        h = l.getHierarchy()
 
         x = {
-          :name => d.getName,
-          :caption => d.getCaption,
-          :type => self.dimension_type,
-          :level => l.getCaption,
-          :level_depth => l.depth
+          name: d.getName,
+          caption: d.getCaption,
+          type: self.dimension_type,
+          level: l.getCaption,
+          level_depth: l.depth,
+          hierarchy: h.getName
         }
       end
 
@@ -231,49 +230,60 @@ module Mondrian
         # return the contents of the filter axis
         # puts self.raw_cell_set.getFilterAxis.inspect
 
-        dimensions = self.axis_members.map { |am| am.first ? am.first.dimension_info : nil }
+        drilldowns_num = if self.raw_cell_set.getMetaData.getAxesMetaData.size == 1
+                           0
+                         else
+                           self.raw_cell_set.getMetaData.getAxesMetaData[1].getHierarchies.size
+                         end
+        dimensions = self.axis_members
+                       .flatten
+                       .map(&:dimension_info)
+                       .uniq
 
-        pprops = unless self.properties.nil?
-                   Mondrian::REST::APIHelpers.parse_properties(self.properties,
-                                                               dimensions[1..-1]) # exclude Measures dimension
-                 else
-                   {}
-                 end
+        pprops = {}
+        pprops = Mondrian::REST::APIHelpers.parse_properties(self.properties, dimensions[1..-1]) unless self.properties.nil?
+        cprops = Mondrian::REST::APIHelpers.parse_caption_properties(self.caption_properties)
 
-        cprops = Mondrian::REST::APIHelpers.parse_caption_properties(
-          self.caption_properties
-        )
+        measure_axis = { members: self.axis_members.first.flatten.map(&:to_h) }
+        measure_axis.merge!(dimensions[0]) if dimensions.size > 0
 
-        rv = {
-          axes: self.axis_members.each_with_index.map { |a, i|
+        member_axes = if drilldowns_num > 1
+                        self.axis_members[1].transpose
+                      elsif drilldowns_num == 1
+                        [self.axis_members[1]]
+                      else
+                        []
+                      end
+
+        {
+          axes: [measure_axis] + member_axes.each_with_index.map { |a, axis_index|
             {
-              members: a.map { |m|
+              members: a.uniq(&:full_name).map { |m|
                 mh = m.to_h(
                   pprops.dig(m.raw_member.getDimension.name, m.raw_level.name) || [],
                   (cprops.dig(m.raw_member.getDimension.name, m.raw_level.name) || [[]])[0][-1]
                 )
                 if parents
-                  mh.merge!({
-                              ancestors: m.ancestors.map { |ma|
-                                ma.to_h(
-                                  pprops.dig(ma.raw_member.getDimension.name, ma.raw_level.name) || [],
-                                  (cprops.dig(ma.raw_member.getDimension.name, ma.raw_level.name) || [[]])[0][-1]
-                                )
-                              }
-                            })
+                  mh[:ancestors] = m.ancestors.map { |ma|
+                    ma.to_h(
+                      pprops.dig(ma.raw_member.getDimension.name, ma.raw_level.name) || [],
+                      (cprops.dig(ma.raw_member.getDimension.name, ma.raw_level.name) || [[]])[0][-1])
+                  }
                 end
                 mh
               }
-            }
+            }.merge(dimensions.size > 1 ? dimensions[axis_index+1] : {})
           },
-          axis_dimensions: dimensions,
-          values: self.values
+          cell_keys: if drilldowns_num > 1
+                       self.axis_members[1].map { |t| t.map { |m| m.property_value('MEMBER_KEY') } }
+                     elsif drilldowns_num == 1
+                       self.axis_members[1].map { |t| [ t.property_value('MEMBER_KEY') ] }
+                     else
+                       []
+                     end,
+          values: self.values,
+          mdx: debug ? self.mdx : nil
         }
-
-        rv[:mdx] = self.mdx if debug
-
-        rv
-
       end
     end
   end
