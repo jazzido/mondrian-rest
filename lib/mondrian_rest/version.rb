@@ -1,5 +1,5 @@
 module Mondrian
   module REST
-    VERSION = "0.7.9"
+    VERSION = "1.0.0"
   end
 end
