@@ -8,7 +8,11 @@ See [`mondrian-rest-demo`](https://github.com/jazzido/mondrian-rest-demo) and [`
 
 [`mondrian-rest-ui`](https://github.com/jazzido/mondrian-rest-ui) is an experimental visualization tool for `mondrian-rest`, inspired by [CubesViewer](https://github.com/jjmontesl/cubesviewer) and [Polestar](https://github.com/vega/polestar).
 
-*NOTE*: `mondrian-rest` expect the `mondrian.olap.SsasCompatibleNaming` Java property is set to `true`. Set a environment variable `JAVA_OPTS="-Dmondrian.olap.SsasCompatibleNaming=true""` to the process that uses `mondrian-rest`.
+*NOTE*: `mondrian-rest` expect the `mondrian.olap.SsasCompatibleNaming` Java property is set to `true`. Set a environment variable `JAVA_OPTS="-Dmondrian.olap.SsasCompatibleNaming=true"` to the process that uses `mondrian-rest`.
+
+## In the wild
+
+`mondrian-rest` powers [Datachile](https://es.datachile.io)'s API, and other fine websites built by [Datawheel](http://datawheel.us).
 
 ## Credits
 
