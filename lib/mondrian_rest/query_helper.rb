@@ -269,7 +269,7 @@ module Mondrian::REST
 
         # Apply filters
         unless filters.empty?
-          filter_exp = filters.map { |f| "[Measures].[#{org.olap4j.mdx.MdxUtil.mdxEncodeString(f[:measure])}] #{f[:operand]} #{f[:value]}" }.join(' AND ')
+          filter_exp = filters.map { |f| "[Measures].[#{f[:measure]}] #{f[:operand]} #{f[:value]}" }.join(' AND ')
           axis_exp = "FILTER(#{axis_exp}, #{filter_exp})"
         end
 
