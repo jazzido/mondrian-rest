@@ -1114,6 +1114,16 @@
         0,
         null,
         null,
+        null,
+        0,
+        0,
+        0,
+        0,
+        null,
+        0,
+        0,
+        null,
+        null,
         null
       ],
       "/Users/marcio/Workspace/contributions/marcio-mondrian-rest/lib/mondrian_rest/api_helpers.rb": [
@@ -1583,6 +1593,6 @@
         null
       ]
     },
-    "timestamp": 1536587351
+    "timestamp": 1536593104
   }
 }
