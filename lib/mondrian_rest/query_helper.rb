@@ -4,7 +4,7 @@ module Mondrian::REST
     VALID_FILTER_OPS = [
       '>', '<', '>=', '<=', '=', '<>'
     ].freeze
-    VALID_FILTER_RE = /(?<measure>[a-zA-Z0-9\s]+)\s*(?<operand>#{VALID_FILTER_OPS.join("|")})\s*(?<value>-?\d+\.?\d*)/
+    VALID_FILTER_RE = /(?<measure>[a-zA-Z0-9-!$%^&*()_+|@#~`{}\[\]:";'?,.\/\s]+)\s*(?<operand>#{VALID_FILTER_OPS.join("|")})\s*(?<value>-?\d+\.?\d*)/
     MEMBER_METHODS = %w[Caption Key Name UniqueName].freeze
 
     def unparse_node(node)
