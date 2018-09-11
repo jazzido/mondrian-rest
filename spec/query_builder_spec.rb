@@ -158,4 +158,14 @@ describe "Query Builder" do
       expect(q.to_mdx).to eq("SELECT {[Measures].[Store Invoice]} ON COLUMNS,\n{[Top Sellers]} ON ROWS\nFROM [Warehouse]")
     end
   end
+
+  describe "VALID_FILTER_RE" do
+    it "should match measures with special characters (except '<', '>' and '=')" do
+      m = QueryHelper::VALID_FILTER_RE.match(" \"#$%&'()*+,-./:;?@[\]^_`{|}~ > 100")
+      expect(m["measure"]).to eq(" \"#$%&'()*+,-./:;?@[\]^_`{|}~ ")
+
+      m = QueryHelper::VALID_FILTER_RE.match("#<=># > 100")
+      expect(m["measure"]).not_to eq("#<=># ")
+    end
+  end
 end

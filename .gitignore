@@ -2,3 +2,5 @@
 *.log
 spec/fixtures/foodmart/
 spec/fixtures/webshop.sqlite
+coverage
+
