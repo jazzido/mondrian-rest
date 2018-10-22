@@ -11,6 +11,7 @@ module Mondrian::REST
       @@olap
       if @@olap.nil?
         raise 'Please create mondrian connection and .connect in config.ru'
+      end
     end
 
     ##
