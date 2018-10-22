@@ -4,15 +4,13 @@ module Mondrian::REST
   end
 
   module APIHelpers
-    @@olap = nil
+    @@olap = nil # env['mondrian-olap.conn']
     @@mdx_parser = nil
 
     def olap
-      if @@olap.nil?
-        @@olap = Mondrian::OLAP::Connection.new(env['mondrian-olap.params'])
-        @@olap.connect
-      end
       @@olap
+      if @@olap.nil?
+        raise 'Please create mondrian connection and .connect in config.ru'
     end
 
     ##
