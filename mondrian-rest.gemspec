@@ -18,7 +18,7 @@ Gem::Specification.new do |s|
 
 
   s.add_runtime_dependency 'mondrian-olap', ["~> 0.8.0"]
-  s.add_runtime_dependency 'grape', '~> 1.0', '>= 1.0.0'
+  s.add_runtime_dependency 'grape', '~> 1.2', '>= 1.2.3'
   s.add_runtime_dependency 'writeexcel', '~> 1.0', '>= 1.0.5'
   s.add_runtime_dependency 'activesupport', '~> 5.1', '>= 5.1.5'
 
