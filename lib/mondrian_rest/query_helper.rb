@@ -265,7 +265,15 @@ module Mondrian::REST
 
       unless dd.empty?
         # Cross join all the drilldowns
-        axis_exp = dd.join(' * ')
+        axis_exp = if dd.size == 1
+                     dd
+                   else dd.size > 1
+                     cross = "Crossjoin(#{dd.pop(2).join(', ')})"
+                     while !dd.empty?
+                       cross = "Crossjoin(#{dd.pop}, #{cross})"
+                     end
+                     cross
+                   end
 
         # Apply filters
         unless filters.empty?
