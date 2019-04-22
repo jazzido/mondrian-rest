@@ -189,7 +189,7 @@ describe "Cube API" do
       get '/cubes/Sales/aggregate?drilldown[]=Time.Month&drilldown[]=Customers.City&measures[]=Store%20Sales&debug=true'
       r = JSON.parse(last_response.body)
       expect(r.has_key?('mdx')).to be(true)
-      expect(r['mdx']).to eq("SELECT {[Measures].[Store Sales]} ON COLUMNS,\n[Time].[Time].[Month].Members * [Customers].[Customers].[City].Members ON ROWS\nFROM [Sales]")
+      expect(r['mdx']).to eq("SELECT {[Measures].[Store Sales]} ON COLUMNS,\nCrossjoin([Time].[Time].[Month].Members, [Customers].[Customers].[City].Members) ON ROWS\nFROM [Sales]")
     end
 
     it "should not include the generated MDX in the response if debug not given or if debug=false" do
