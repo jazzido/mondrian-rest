@@ -12,7 +12,7 @@ See [`mondrian-rest-demo`](https://github.com/jazzido/mondrian-rest-demo) and [`
 
 ## In the wild
 
-`mondrian-rest` powers [Datachile](https://es.datachile.io)'s API, and other fine websites built by [Datawheel](http://datawheel.us).
+`mondrian-rest` powers [Datachile](https://es.datachile.io)'s, [DataUSA](https://datausa.io), and other fine websites built by [Datawheel](http://datawheel.us).
 
 ## Credits
 
