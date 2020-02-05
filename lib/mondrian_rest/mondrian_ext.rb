@@ -275,9 +275,9 @@ module Mondrian
             }.merge(dimensions.size > 1 ? dimensions[axis_index+1] : {})
           },
           cell_keys: if drilldowns_num > 1
-                       self.axis_members[1].map { |t| t.map { |m| m.property_value('MEMBER_KEY') } }
+                       self.axis_members[1].map { |t| t.map { |m| m.property_value('MEMBER_UNIQUE_NAME') } }
                      elsif drilldowns_num == 1
-                       self.axis_members[1].map { |t| [ t.property_value('MEMBER_KEY') ] }
+                       self.axis_members[1].map { |t| [ t.property_value('MEMBER_UNIQUE_NAME') ] }
                      else
                        []
                      end,
