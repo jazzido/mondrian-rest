@@ -4,9 +4,9 @@ before_install:
   - gem update --system
   - gem install bundler
 jdk:
-  - oraclejdk9
   - openjdk10
   - oraclejdk11
+  - oraclejdk12
 rvm:
   - jruby-9.2.5.0
 env:
