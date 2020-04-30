@@ -4,13 +4,12 @@ module Mondrian::REST
   end
 
   module APIHelpers
-    @@olap = nil
+    @@olap = nil # env['mondrian-olap.conn']
     @@mdx_parser = nil
 
     def olap
       if @@olap.nil?
-        @@olap = Mondrian::OLAP::Connection.new(env['mondrian-olap.params'])
-        @@olap.connect
+        raise 'Please create mondrian connection and .connect in config.ru'
       end
       @@olap
     end
@@ -19,22 +18,21 @@ module Mondrian::REST
     # Returns an instance of org.olap4j.mdx.parser.MdxParser
     def mdx_parser
       if @@mdx_parser.nil?
-        @@mdx_parser = olap.raw_connection.getParserFactory
-                       .createMdxParser(olap.raw_connection)
+        raise 'Please create mondrian mdx parser'
       end
       @@mdx_parser
     end
 
     def olap_flush
-      if olap.connected?
-        olap.flush_schema_cache
-        olap.close
+      if @@olap.connected?
+        @@olap.flush_schema_cache
+        @@olap.close
       end
-      olap.connect
+      @@olap.connect
     end
 
     def get_cube_or_404(name)
-      cube = olap.cube(name)
+      cube = @@olap.cube(name)
       error!('Not found', 404) if cube.nil?
       cube
     end
